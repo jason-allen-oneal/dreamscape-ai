@@ -15,7 +15,7 @@ interface DreamsPageClientProps {
 
 export default function DreamsPageClient({ dreams }: DreamsPageClientProps) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0a0a2e] via-[#16213e] to-[#0f3460] text-white">
+    <main className="relative min-h-screen bg-gradient-to-br from-[#0a0a2e] via-[#16213e] to-[#0f3460] text-white">
       {/* Dreamy background particles */}
       <div className="absolute inset-0">
         {[...Array(30)].map((_, i) => (

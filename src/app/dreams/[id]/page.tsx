@@ -2,12 +2,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 export default function DreamDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [dream, setDream] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     fetch(`/api/dreams/${id}`)
@@ -25,6 +28,25 @@ export default function DreamDetailPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error("Failed to delete dream:", err);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!dream?.id) return;
+    setAnalyzing(true);
+    try {
+      const response = await fetch(`/api/dreams/${dream.id}/analyze`, { 
+        method: "POST" 
+      });
+      if (!response.ok) throw new Error("Failed to analyze dream");
+      const data = await response.json();
+      setAnalysis(data.analysis);
+      toast.success("Dream analyzed successfully!");
+    } catch (err) {
+      console.error("Failed to analyze dream:", err);
+      toast.error("Failed to analyze dream");
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -54,6 +76,13 @@ export default function DreamDetailPage() {
     <main className="relative min-h-screen text-white overflow-hidden bg-gradient-to-b from-[#060318] via-[#0a0626] to-[#0e0a3a] p-6 sm:p-10">
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 max-w-3xl mx-auto mb-6">
+        <button
+          onClick={handleAnalyze}
+          disabled={analyzing}
+          className="px-4 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 font-semibold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {analyzing ? "Analyzing..." : "🔮 Analyze Dream"}
+        </button>
         <button
           onClick={() => router.push(`/dashboard/dreams/${dream.id}/edit`)}
           className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold shadow-md transition"
@@ -95,6 +124,23 @@ export default function DreamDetailPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Analysis Section */}
+      {analysis && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="max-w-3xl mx-auto mt-6 bg-slate-900/60 p-10 rounded-2xl border border-fuchsia-500/30 backdrop-blur-lg shadow-xl"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-fuchsia-300">🔮 Dream Analysis</h2>
+          <div className="prose prose-invert prose-sm max-w-none">
+            <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+              {analysis}
+            </div>
+          </div>
+        </motion.div>
+      )}
     </main>
   );
 }

@@ -1,7 +1,10 @@
 // src/components/dream/DreamCard.tsx
 
+"use client";
+
 import { Dream, Media, DreamTag } from "@prisma/client";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 interface DreamCardProps {
   dream: Dream & { 
@@ -35,11 +38,18 @@ const getEmotionGlow = (emotion?: string) => {
 };
 
 export default function DreamCard({ dream }: DreamCardProps) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/dreams/${dream.id}`);
+  };
+
   return (
     <motion.div 
       className="relative group cursor-pointer"
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3 }}
+      onClick={handleClick}
     >
       {/* Dream card */}
       <div className={`
