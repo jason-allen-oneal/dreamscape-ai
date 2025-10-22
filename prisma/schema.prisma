@@ -1,0 +1,185 @@
+// ───────────────────────────────────────────────────────────────────────────────
+// Dreamscape AI — Prisma Schema
+// Uses MySQL + Prisma only
+// ───────────────────────────────────────────────────────────────────────────────
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+//
+// ─── CORE MODELS ────────────────────────────────────────────────────────────────
+//
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  password      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  consentWorld  Boolean  @default(false)
+
+  dreams        Dream[]
+}
+
+//
+// ─── ENUMS ──────────────────────────────────────────────────────────────────────
+//
+
+enum DreamSourceType {
+  TEXT
+  VOICE
+  SKETCH
+  IMAGE
+}
+
+enum DreamVisibility {
+  PRIVATE // user-only
+  SHARED // visible in personal/public gallery
+  WORLD // anonymized and added to collective world
+}
+
+enum MediaKind {
+  AUDIO
+  IMAGE
+  VIDEO
+  SKETCH
+}
+
+enum TagType {
+  ENTITY
+  ACTION
+  PLACE
+  OBJECT
+  ARCHETYPE
+  EMOTION
+  COLOR
+  SENSORY
+}
+
+enum EdgeKind {
+  CO_OCCUR
+  TRANSITION
+  AFFECT_SHIFT
+  SYMBOLIC
+}
+
+//
+// ─── TAG DICTIONARY ─────────────────────────────────────────────────────────────
+//
+
+model TagDictionary {
+  id        String   @id @default(cuid())
+  type      TagType
+  value     String   @unique
+  createdAt DateTime @default(now())
+
+  dreamTags DreamTag[]
+}
+
+//
+// ─── MEDIA, TAGS, AND EMBEDDINGS ────────────────────────────────────────────────
+//
+
+model Media {
+  id      String @id @default(cuid())
+  dreamId String
+  dream   Dream  @relation(fields: [dreamId], references: [id])
+
+  kind        MediaKind // AUDIO, IMAGE, VIDEO, SKETCH
+  url         String
+  mime        String
+  width       Int?
+  height      Int?
+  durationMs  Int?
+  description String? // e.g. "Sketch of the labyrinth walls"
+  sortOrder   Int? // helps order media in the UI
+  createdAt   DateTime  @default(now())
+}
+
+model DreamEmbedding {
+  id        String   @id @default(cuid())
+  dreamId   String
+  dream     Dream    @relation(fields: [dreamId], references: [id])
+  space     String // e.g., "text-embed-v1"
+  vector    Json // store embedding array or BLOB encoded
+  createdAt DateTime @default(now())
+}
+
+// ─── EMOTION ENUM ──────────────────────────────────────────────────────────────
+enum EmotionType {
+  JOY
+  SADNESS
+  FEAR
+  ANGER
+  SURPRISE
+  DISGUST
+  NEUTRAL
+  LOVE
+  ANXIETY
+  CALM
+}
+
+model Dream {
+  id        String   @id @default(cuid())
+  userId    String?
+  User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sourceType DreamSourceType
+  visibility DreamVisibility @default(PRIVATE)
+
+  rawText    String?
+  summary    String?
+  sentiment  Float? // -1..1
+  valence    Float? // 0..1
+  arousal    Float? // 0..1
+  intensity  Float? // 0..1
+  emotion    EmotionType? // NEW: discrete emotion type
+  safetyFlag Boolean @default(false)
+
+  mediaItems Media[]
+  tags       DreamTag[]
+  embeddings DreamEmbedding[]
+
+  @@index([userId])
+  @@index([visibility])
+  @@index([sentiment])
+  @@index([emotion]) // index for faster queries by emotion
+}
+
+model DreamTag {
+  id      String @id @default(cuid())
+  dreamId String
+  dream   Dream  @relation(fields: [dreamId], references: [id])
+
+  tagDictionaryId String
+  tagDictionary   TagDictionary @relation(fields: [tagDictionaryId], references: [id])
+
+  weight    Float? // importance 0..1
+  createdAt DateTime @default(now())
+
+  // Back-relations for graph edges
+  edgesFrom GraphEdge[] @relation("EdgeFrom")
+  edgesTo   GraphEdge[] @relation("EdgeTo")
+}
+
+model GraphEdge {
+  id String @id @default(cuid())
+
+  fromTagId String
+  toTagId   String
+
+  fromTag DreamTag @relation("EdgeFrom", fields: [fromTagId], references: [id], map: "fk_graphedge_fromtag")
+  toTag   DreamTag @relation("EdgeTo", fields: [toTagId], references: [id], map: "fk_graphedge_totag")
+
+  kind      EdgeKind
+  weight    Float
+  createdAt DateTime @default(now())
+}
