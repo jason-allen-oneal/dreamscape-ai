@@ -1,9 +1,9 @@
 // src/app/api/world/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Agent, run } from "@/lib/gemini";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Fetch all world-visible dreams
     const dreams = await prisma.dream.findMany({

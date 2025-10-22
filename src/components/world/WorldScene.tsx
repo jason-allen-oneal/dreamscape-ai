@@ -32,7 +32,7 @@ function DreamOrb({ position, color, scale = 1 }: { position: [number, number, n
 function DreamParticles() {
   const groupRef = useRef<Group>(null!);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.001;
     }

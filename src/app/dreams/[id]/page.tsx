@@ -3,11 +3,16 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { Dream, Media } from "@prisma/client";
+
+type DreamWithRelations = Dream & {
+  mediaItems?: Media[];
+};
 
 export default function DreamDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [dream, setDream] = useState<any>(null);
+  const [dream, setDream] = useState<DreamWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -113,7 +118,7 @@ export default function DreamDetailPage() {
 
         {dream.mediaItems?.length > 0 && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {dream.mediaItems.map((m: any) => (
+            {dream.mediaItems.map((m) => (
               <img
                 key={m.id}
                 src={m.url}

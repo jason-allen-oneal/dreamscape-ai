@@ -2,11 +2,19 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Dream, Media, DreamTag, TagDictionary } from "@prisma/client";
+
+type DreamWithRelations = Dream & {
+  mediaItems?: Media[];
+  tags?: (DreamTag & {
+    tagDictionary: TagDictionary;
+  })[];
+};
 
 export default function DashboardDreamsPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [dreams, setDreams] = useState<any[]>([]);
+  const [dreams, setDreams] = useState<DreamWithRelations[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -150,7 +158,7 @@ export default function DashboardDreamsPage() {
                   )}
                   {d.tags && d.tags.length > 0 && (
                     <div className="flex gap-2">
-                      {d.tags.slice(0, 3).map((tag: any) => (
+                      {d.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag.id}
                           className="px-2 py-1 text-xs rounded-full bg-slate-700/50 border border-slate-600/50 text-gray-400"
