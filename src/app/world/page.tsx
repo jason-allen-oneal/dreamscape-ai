@@ -40,7 +40,7 @@ export default function WorldPage() {
   }, []);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden text-white">
+    <main className="relative h-screen w-screen overflow-x-hidden text-white">
       <SpectralBackdrop className="opacity-40" />
 
       <div className="absolute inset-0 z-10">

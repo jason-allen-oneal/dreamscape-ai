@@ -43,7 +43,7 @@ export default async function GlobalDreamMapPage() {
   const { nodes, edges } = await getGlobalDreamGraph();
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#030014] text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#030014] text-white">
       <GlobalDreamMapClient nodes={nodes} edges={edges} />
     </main>
   );

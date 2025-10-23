@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-16 text-white">
+    <main className="relative flex min-h-screen items-center justify-center overflow-x-hidden px-6 py-16 text-white">
       <SpectralBackdrop className="opacity-80" />
 
       <motion.form

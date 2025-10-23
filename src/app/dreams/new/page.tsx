@@ -6,7 +6,7 @@ import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
 
 export default function NewDreamPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+    <main className="relative min-h-screen overflow-x-hidden px-6 py-16 text-white">
       <SpectralBackdrop className="opacity-80" />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-12">

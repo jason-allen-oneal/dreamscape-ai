@@ -27,6 +27,8 @@ type Orb = {
   height: number;
   duration: number;
   delay: number;
+  offsetX: number;
+  offsetY: number;
 };
 
 const HUE_MAP = {
@@ -52,6 +54,22 @@ const HUE_MAP = {
   },
 } as const;
 
+function createSeededRandom(seed: string) {
+  let h = 1779033703 ^ seed.length;
+
+  for (let i = 0; i < seed.length; i += 1) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
 export function SpectralBackdrop({
   className,
   density = 120,
@@ -61,29 +79,37 @@ export function SpectralBackdrop({
 
   const stars = useMemo<Star[]>(
     () =>
-      Array.from({ length: density }).map((_, index) => ({
-        id: `star-${index}`,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size: Math.random() * 1.4 + 0.4,
-        duration: 8 + Math.random() * 12,
-        delay: Math.random() * 12,
-      })),
-    [density],
+      Array.from({ length: density }).map((_, index) => {
+        const random = createSeededRandom(`star-${density}-${hue}-${index}`);
+        return {
+          id: `star-${index}`,
+          left: random() * 100,
+          top: random() * 100,
+          size: random() * 1.4 + 0.4,
+          duration: 8 + random() * 12,
+          delay: random() * 12,
+        };
+      }),
+    [density, hue],
   );
 
   const orbs = useMemo<Orb[]>(
     () =>
-      Array.from({ length: 8 }).map((_, index) => ({
-        id: `orb-${index}`,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        width: 16 + Math.random() * 12,
-        height: 16 + Math.random() * 12,
-        duration: 18 + Math.random() * 8,
-        delay: Math.random() * 12,
-      })),
-    [],
+      Array.from({ length: 8 }).map((_, index) => {
+        const random = createSeededRandom(`orb-${density}-${hue}-${index}`);
+        return {
+          id: `orb-${index}`,
+          left: random() * 100,
+          top: random() * 100,
+          width: 16 + random() * 12,
+          height: 16 + random() * 12,
+          duration: 18 + random() * 8,
+          delay: random() * 12,
+          offsetX: (random() - 0.5) * 40,
+          offsetY: (random() - 0.5) * 40,
+        };
+      }),
+    [density, hue],
   );
 
   return (
@@ -166,8 +192,8 @@ export function SpectralBackdrop({
             animate={{
               opacity: [0.05, 0.16, 0.05],
               scale: [0.8, 1.2, 0.8],
-              x: [0, (Math.random() - 0.5) * 40, 0],
-              y: [0, (Math.random() - 0.5) * 40, 0],
+              x: [0, orb.offsetX, 0],
+              y: [0, orb.offsetY, 0],
             }}
             transition={{
               duration: orb.duration,

@@ -73,7 +73,7 @@ export default function DreamDetailPage() {
 
   if (loading) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden text-white">
+      <main className="relative flex min-h-screen items-center justify-center overflow-x-hidden text-white">
         <SpectralBackdrop className="opacity-75" />
         <p className="relative z-10 rounded-full border border-white/15 bg-white/10 px-6 py-3 text-xs uppercase tracking-[0.4em] text-white/60 backdrop-blur">
           Summoning dream...
@@ -84,7 +84,7 @@ export default function DreamDetailPage() {
 
   if (error || !dream) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden text-white">
+      <main className="relative flex min-h-screen items-center justify-center overflow-x-hidden text-white">
         <SpectralBackdrop className="opacity-75" />
         <div className="relative z-10 flex flex-col gap-4 rounded-3xl border border-white/12 bg-white/6 px-10 py-12 text-center backdrop-blur">
           <p className="text-lg font-semibold text-white/85">Signal Lost</p>
@@ -101,7 +101,7 @@ export default function DreamDetailPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+    <main className="relative min-h-screen overflow-x-hidden px-6 py-16 text-white">
       <SpectralBackdrop className="opacity-80" />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-10">

@@ -46,7 +46,7 @@ export default function DreamsPageClient({ dreams }: DreamsPageClientProps) {
             transition={{ duration: 0.8 }}
             className="mx-auto flex max-w-lg flex-col items-center gap-6 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur"
           >
-            <span className="text-5xl">🜁</span>
+            <span className="text-5xl">👁️‍🗨️</span>
             <h2 className="text-2xl font-semibold text-white/85">
               The archive awaits its first offering
             </h2>

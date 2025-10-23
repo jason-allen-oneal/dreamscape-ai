@@ -20,7 +20,7 @@ export default async function DreamEditPage({ params }: DreamProps) {
 
   if (!dream) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden text-white">
+      <main className="relative flex min-h-screen items-center justify-center overflow-x-hidden text-white">
         <SpectralBackdrop className="opacity-70" />
         <p className="relative z-10 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 backdrop-blur">
           Dream not found.
@@ -30,7 +30,7 @@ export default async function DreamEditPage({ params }: DreamProps) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+    <main className="relative min-h-screen overflow-x-hidden px-6 py-16 text-white">
       <SpectralBackdrop className="opacity-80" />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-10">

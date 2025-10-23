@@ -11,7 +11,7 @@ const heroStats = [
 
 export default function HomePage() {
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden text-white">
+    <main className="relative flex min-h-screen flex-col overflow-x-hidden text-white">
       <SpectralBackdrop className="opacity-80" />
 
       <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 gap-16 px-6 py-20 md:grid-cols-[1.1fr_0.9fr] md:py-28">

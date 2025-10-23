@@ -8,25 +8,25 @@ const pillars = [
     title: "Collective cartography",
     description:
       "Each shared dream becomes a luminous node. We surface recurring motifs and emotions to map the subconscious terrain we traverse together.",
-    icon: "✶",
+    icon: "✴️",
   },
   {
     title: "Ethical guardianship",
     description:
       "Dreams are sacred memories. You decide who can access them, and you can withdraw them from the constellation at any time.",
-    icon: "🜂",
+    icon: "🛡️",
   },
   {
     title: "Generative reflection",
     description:
       "Machine intelligence refracts your visions into reflections, prompts, and visual companions that invite deeper interpretation.",
-    icon: "🜁",
+    icon: "❇️",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden text-white">
+    <main className="relative min-h-screen overflow-x-hidden text-white">
       <SpectralBackdrop className="opacity-75" />
 
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-16 px-6 py-20 md:py-28">
