@@ -195,9 +195,36 @@ Return JSON only.
     const summary =
       typeof parsed.summary === "string" ? parsed.summary : "";
 
+    const userIdentifiers: Prisma.UserWhereInput[] = [];
+    if (session.user.id) {
+      userIdentifiers.push({ id: session.user.id as string });
+    }
+    if (typeof session.user.name === "string" && session.user.name.trim()) {
+      userIdentifiers.push({ username: session.user.name });
+    }
+
+    if (userIdentifiers.length === 0) {
+      return NextResponse.json(
+        { error: "User account not found" },
+        { status: 404 },
+      );
+    }
+
+    const userRecord = await prisma.user.findFirst({
+      where: { OR: userIdentifiers },
+      select: { id: true },
+    });
+
+    if (!userRecord) {
+      return NextResponse.json(
+        { error: "User account not found" },
+        { status: 404 },
+      );
+    }
+
     const dream = await prisma.dream.create({
       data: {
-        userId: session.user.id,
+        userId: userRecord.id,
         rawText,
         summary,
         sentiment,

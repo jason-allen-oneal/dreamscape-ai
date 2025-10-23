@@ -60,7 +60,7 @@ export default function DashboardDreamsPage() {
 
         {dreams.length === 0 ? (
           <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur">
-            <span className="text-4xl">☾</span>
+            <span className="text-4xl">🌙</span>
             <h2 className="text-2xl font-semibold text-white/85">No entries yet</h2>
             <p className="text-sm text-white/65">
               Your subconscious ledger is quiet. Record the next dream you recall
