@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import DreamCard from "./DreamCard";
+import Link from "next/link";
 import { Dream, Media, DreamTag } from "@prisma/client";
 import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
-import Link from "next/link";
+import DreamCard from "./DreamCard";
 
 type ExpandedDream = Dream & {
   mediaItems?: Media[];
@@ -24,19 +24,18 @@ export default function DreamsPageClient({ dreams }: DreamsPageClientProps) {
         <motion.header
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1, ease: "easeOut" }}
-          className="mx-auto max-w-3xl text-center"
+          transition={{ duration: 1 }}
+          className="mx-auto max-w-3xl text-center space-y-6"
         >
           <p className="text-xs uppercase tracking-[0.5em] text-white/40">
             Collective Atlas
           </p>
-          <h1 className="mt-4 text-4xl font-semibold text-white/90 md:text-6xl">
+          <h1 className="text-4xl font-semibold text-white/90 md:text-6xl">
             Shared Dream Archive
           </h1>
-          <p className="mt-5 text-base leading-relaxed text-white/65">
-            Drift through visions that dreamers across the world have released
-            into the ether. Each entry pulses with its own emotional hue and
-            recurring motifs.
+          <p className="text-base leading-relaxed text-white/65">
+            Drift through visions released by dreamers across the world. Each
+            entry shimmers with its own emotional hue and recurring motifs.
           </p>
         </motion.header>
 

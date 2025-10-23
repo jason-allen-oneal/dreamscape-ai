@@ -6,8 +6,88 @@ import { authOptions } from "@/lib/auth";
 import { Agent, run } from "@/lib/gemini";
 import { parseGeminiJSON } from "@/lib/utils";
 import dbTools from "@/lib/tools";
+import {
+  DreamSourceType,
+  DreamVisibility,
+  EmotionType,
+  MediaKind,
+  Prisma,
+  TagType,
+} from "@prisma/client";
 
-type SourceType = "TEXT" | "VOICE" | "IMAGE" | "SKETCH";
+type SourceType = DreamSourceType;
+
+interface JsonMediaItem {
+  url?: unknown;
+  kind?: unknown;
+  mime?: unknown;
+}
+
+interface JsonBody {
+  rawText?: unknown;
+  visibility?: unknown;
+  sourceType?: unknown;
+  mediaItems?: JsonMediaItem[];
+}
+
+interface GeminiTag {
+  type?: unknown;
+  value?: unknown;
+  weight?: unknown;
+}
+
+interface ParsedDream {
+  summary?: unknown;
+  tags?: GeminiTag[];
+  sentiment?: unknown;
+  valence?: unknown;
+  arousal?: unknown;
+  intensity?: unknown;
+  emotion?: unknown;
+}
+
+const isDreamVisibility = (value: unknown): value is DreamVisibility =>
+  typeof value === "string" &&
+  Object.values(DreamVisibility).includes(value as DreamVisibility);
+
+const isDreamSourceType = (value: unknown): value is DreamSourceType =>
+  typeof value === "string" &&
+  Object.values(DreamSourceType).includes(value as DreamSourceType);
+
+const isMediaKind = (value: unknown): value is MediaKind =>
+  typeof value === "string" &&
+  Object.values(MediaKind).includes(value as MediaKind);
+
+const isEmotionType = (value: unknown): value is EmotionType =>
+  typeof value === "string" &&
+  Object.values(EmotionType).includes(value as EmotionType);
+
+const isTagType = (value: unknown): value is TagType =>
+  typeof value === "string" && Object.values(TagType).includes(value as TagType);
+
+const parseVisibility = (value: unknown): DreamVisibility =>
+  isDreamVisibility(value) ? value : DreamVisibility.PRIVATE;
+
+const parseSourceType = (value: unknown): DreamSourceType =>
+  isDreamSourceType(value) ? value : DreamSourceType.TEXT;
+
+const mapFormFieldToMediaKind = (fieldName: string): MediaKind => {
+  const normalized = fieldName.toUpperCase();
+  if (normalized.includes("AUDIO")) return MediaKind.AUDIO;
+  if (normalized.includes("SKETCH")) return MediaKind.SKETCH;
+  if (normalized.includes("VIDEO")) return MediaKind.VIDEO;
+  return MediaKind.IMAGE;
+};
+
+const fallbackParsed: ParsedDream = {
+  summary: "",
+  tags: [],
+  sentiment: 0,
+  valence: 0.5,
+  arousal: 0.5,
+  intensity: 0.5,
+  emotion: undefined,
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,53 +97,57 @@ export async function POST(req: NextRequest) {
     }
 
     let rawText = "";
-    let visibility: "PRIVATE" | "WORLD" = "PRIVATE";
-    let sourceType: SourceType = "TEXT";
-    const mediaItems: any[] = [];
+    let visibility: DreamVisibility = DreamVisibility.PRIVATE;
+    let sourceType: SourceType = DreamSourceType.TEXT;
+    const mediaItems: Prisma.MediaCreateWithoutDreamInput[] = [];
 
-    // Handle FormData (files + fields)
     if (req.headers.get("content-type")?.includes("multipart/form-data")) {
       const formData = await req.formData();
-      rawText = formData.get("rawText")?.toString() || "";
-      visibility = (formData.get("visibility")?.toString() as "PRIVATE" | "WORLD") || "PRIVATE";
-      sourceType = (formData.get("sourceType")?.toString() as SourceType) || "TEXT";
+      rawText = formData.get("rawText")?.toString() ?? "";
+      visibility = parseVisibility(formData.get("visibility"));
+      sourceType = parseSourceType(formData.get("sourceType"));
 
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           const fileName = `${Date.now()}-${value.name}`;
           const filePath = `/public/uploads/${fileName}`;
-          // App Router: just reference path; skip fs write if not using server storage
           mediaItems.push({
-            kind: key.includes("AUDIO") ? "AUDIO" : key.includes("SKETCH") ? "SKETCH" : "IMAGE",
+            kind: mapFormFieldToMediaKind(key),
             url: filePath,
             mime: value.type,
           });
         }
       }
     } else {
-      const body = await req.json();
-      rawText = body.rawText || "";
-      visibility = body.visibility || "PRIVATE";
-      sourceType = body.sourceType || "TEXT";
-      mediaItems.push(...(body.mediaItems || []));
+      const body = (await req.json()) as JsonBody;
+      rawText = typeof body.rawText === "string" ? body.rawText : "";
+      visibility = parseVisibility(body.visibility);
+      sourceType = parseSourceType(body.sourceType);
+
+      if (Array.isArray(body.mediaItems)) {
+        body.mediaItems.forEach((item) => {
+          if (!item || typeof item.url !== "string") {
+            return;
+          }
+
+          const kind = isMediaKind(item.kind) ? item.kind : MediaKind.IMAGE;
+          mediaItems.push({
+            url: item.url,
+            kind,
+            mime:
+              typeof item.mime === "string" ? item.mime : "application/octet-stream",
+          });
+        });
+      }
     }
 
-    if (!rawText && sourceType === "TEXT") {
+    if (!rawText && sourceType === DreamSourceType.TEXT) {
       return NextResponse.json({ error: "rawText is required" }, { status: 400 });
     }
 
-    // Defaults in case Gemini fails
-    let parsed: any = {
-      summary: "",
-      tags: [],
-      sentiment: 0,
-      valence: 0.5,
-      arousal: 0.5,
-      intensity: 0.5,
-      emotion: "",
-    };
+    let parsed: ParsedDream = { ...fallbackParsed };
 
-    if (sourceType === "TEXT") {
+    if (sourceType === DreamSourceType.TEXT) {
       try {
         const dreamAgent = new Agent({
           name: "Dream Classifier",
@@ -83,42 +167,71 @@ Return JSON only.
         });
 
         const output = await run(dreamAgent, rawText);
-        parsed = parseGeminiJSON(output.finalOutput);
-      } catch (err) {
-        console.warn("Gemini failed, falling back to defaults", err);
+        const parsedResult = parseGeminiJSON(output.finalOutput) as ParsedDream;
+        if (parsedResult && typeof parsedResult === "object") {
+          parsed = {
+            ...fallbackParsed,
+            ...parsedResult,
+            tags: Array.isArray(parsedResult.tags) ? parsedResult.tags : [],
+          };
+        }
+      } catch (error) {
+        console.warn("Gemini failed, falling back to defaults", error);
+        parsed = { ...fallbackParsed };
       }
     }
 
-    // Create dream
+    const sentiment =
+      typeof parsed.sentiment === "number" ? parsed.sentiment : null;
+    const valence = typeof parsed.valence === "number" ? parsed.valence : null;
+    const arousal = typeof parsed.arousal === "number" ? parsed.arousal : null;
+    const intensity =
+      typeof parsed.intensity === "number" ? parsed.intensity : null;
+    const emotionCandidate =
+      typeof parsed.emotion === "string" ? parsed.emotion : undefined;
+    const emotion = isEmotionType(emotionCandidate)
+      ? emotionCandidate
+      : null;
+    const summary =
+      typeof parsed.summary === "string" ? parsed.summary : "";
+
     const dream = await prisma.dream.create({
       data: {
         userId: session.user.id,
         rawText,
-        summary: parsed.summary || "",
-        sentiment: parsed.sentiment,
-        valence: parsed.valence,
-        arousal: parsed.arousal,
-        intensity: parsed.intensity,
-        emotion: parsed.emotion,
+        summary,
+        sentiment,
+        valence,
+        arousal,
+        intensity,
+        emotion,
         visibility,
         sourceType,
         mediaItems: { create: mediaItems },
       },
     });
 
-    // Upsert tags using dbTools
-    for (const tag of parsed.tags || []) {
-      await dbTools[0].function({ 
-        type: tag.type, 
-        value: tag.value, 
-        weight: tag.weight ?? 1,
-        dreamId: dream.id
-      });
+    const createTagTool = dbTools.find((tool) => tool.name === "createTag");
+    if (createTagTool?.function && Array.isArray(parsed.tags)) {
+      for (const tag of parsed.tags) {
+        if (!isTagType(tag.type) || typeof tag.value !== "string") {
+          continue;
+        }
+
+        await createTagTool.function({
+          type: tag.type,
+          value: tag.value,
+          weight: typeof tag.weight === "number" ? tag.weight : undefined,
+          dreamId: dream.id,
+        });
+      }
     }
 
     return NextResponse.json({ dream });
-  } catch (err: any) {
-    console.error(err);
-    return NextResponse.json({ error: err.message || "Failed to create dream" }, { status: 500 });
+  } catch (error: unknown) {
+    console.error(error);
+    const message =
+      error instanceof Error ? error.message : "Failed to create dream";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

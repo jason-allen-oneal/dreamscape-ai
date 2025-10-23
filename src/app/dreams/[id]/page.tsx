@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
@@ -159,10 +160,13 @@ export default function DreamDetailPage() {
                   key={media.id}
                   className="overflow-hidden rounded-2xl border border-white/12 bg-white/8"
                 >
-                  <img
+                  <Image
                     src={media.url}
                     alt={media.description ?? "Dream artifact"}
+                    width={640}
+                    height={320}
                     className="h-52 w-full object-cover"
+                    unoptimized
                   />
                 </div>
               ))}

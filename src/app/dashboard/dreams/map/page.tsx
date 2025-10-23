@@ -49,11 +49,15 @@ async function fetchDreamGraph(userId: string) {
           x: Math.random() * 80 + 10,
           y: Math.random() * 80 + 10,
           label: tag.tagDictionary.value,
-          emotion: dream.emotion as string,
+          emotion: dream.emotion ?? undefined,
         });
       }
       tag.edgesFrom.forEach((edge) => {
-        edges.push({ from: tag.id, to: edge.toTagId, weight: edge.weight });
+        edges.push({
+          from: tag.id,
+          to: edge.toTagId,
+          weight: edge.weight ?? 0,
+        });
       });
     });
   });

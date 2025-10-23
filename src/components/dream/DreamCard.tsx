@@ -1,5 +1,6 @@
 import { Dream, Media, DreamTag } from "@prisma/client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getEmotionTheme } from "./emotionThemes";
 
@@ -20,12 +21,16 @@ export default function DreamCard({ dream }: DreamCardProps) {
       ? Math.round(dream.intensity * 100)
       : null;
 
+  const handleClick = () => {
+    router.push(`/dreams/${dream.id}`);
+  };
+
   return (
     <motion.div
       className="relative cursor-pointer"
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      onClick={() => router.push(`/dreams/${dream.id}`)}
+      onClick={handleClick}
     >
       <div
         className={`
@@ -101,10 +106,13 @@ export default function DreamCard({ dream }: DreamCardProps) {
                 key={media.id}
                 className="relative overflow-hidden rounded-xl border border-white/12"
               >
-                <img
+                <Image
                   src={media.url}
                   alt={media.description ?? "Dream media"}
+                  width={320}
+                  height={160}
                   className="h-24 w-full object-cover"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent" />
               </div>

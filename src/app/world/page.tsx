@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
+import { motion } from "framer-motion";
 import DreamWorld from "@/components/world/WorldScene";
 import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
-import { motion } from "framer-motion";
 
 interface WorldData {
   atmosphere: string;
@@ -67,7 +67,7 @@ export default function WorldPage() {
 
       <motion.div
         initial={{ opacity: 0, x: -80 }}
-        animate={{ opacity: showInfo ? 1 : 0.2, x: 0 }}
+        animate={{ opacity: showInfo ? 1 : 0.25, x: 0 }}
         transition={{ duration: 0.8 }}
         className="absolute left-6 top-6 max-w-md rounded-2xl border border-white/12 bg-black/40 px-6 py-6 backdrop-blur"
         onMouseEnter={() => setShowInfo(true)}
