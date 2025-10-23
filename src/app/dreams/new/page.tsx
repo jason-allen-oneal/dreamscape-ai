@@ -1,31 +1,43 @@
 "use client";
+
 import { motion } from "framer-motion";
 import DreamForm from "@/components/dream/DreamForm";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
 
 export default function NewDreamPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#060318] via-[#0a0626] to-[#0e0a3a] text-white px-6 py-10 relative overflow-hidden">
-      {/* Optional floating motes or background glow */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute w-[90vw] h-[90vw] top-[-10vw] left-1/2 -translate-x-1/2 
-          bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] 
-          from-fuchsia-600/30 via-indigo-800/20 to-transparent blur-[160px] animate-pulse-slowest" />
-        <div className="absolute w-[70vw] h-[70vw] bottom-[-20vw] right-1/2 translate-x-1/3 
-          bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] 
-          from-indigo-700/20 via-violet-800/10 to-transparent blur-[200px] animate-pulse-slower" />
-      </div>
+    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+      <SpectralBackdrop className="opacity-80" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="bg-slate-900/60 p-10 rounded-2xl border border-slate-800 backdrop-blur-xl w-full max-w-lg shadow-[0_0_40px_rgba(147,51,234,0.2)]"
-      >
-        <h1 className="text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-indigo-400 to-violet-400 text-center">
-          Record a Dream
-        </h1>
-        <DreamForm />
-      </motion.div>
+      <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-12">
+        <motion.header
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="space-y-4 text-center"
+        >
+          <p className="text-xs uppercase tracking-[0.4em] text-white/40">
+            Record Dream
+          </p>
+          <h1 className="text-4xl font-semibold text-white/90 md:text-5xl">
+            Capture Your Night Signal
+          </h1>
+          <p className="text-sm leading-relaxed text-white/65 md:text-base">
+            Describe the symbols, sensations, and emotions before they fade.
+            We&apos;ll weave them into your private atlas—or share them with
+            the collective if you choose.
+          </p>
+        </motion.header>
+
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
+          className="rounded-[32px] border border-white/10 bg-white/6 p-8 backdrop-blur md:p-12"
+        >
+          <DreamForm />
+        </motion.div>
+      </div>
     </main>
   );
 }

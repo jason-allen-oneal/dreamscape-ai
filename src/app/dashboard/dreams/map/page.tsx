@@ -76,7 +76,7 @@ export default async function DreamMapPage() {
   const { nodes, edges } = await fetchDreamGraph(session.user.id);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0a0a2e] via-[#16213e] to-[#0f3460] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#030014] text-white">
       <DreamMapClient nodes={nodes} edges={edges} />
     </main>
   );

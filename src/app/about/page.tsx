@@ -1,95 +1,104 @@
-// src/app/about/page.tsx
-
 "use client";
+
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+
+const pillars = [
+  {
+    title: "Collective cartography",
+    description:
+      "Each shared dream becomes a luminous node. We surface recurring motifs and emotions to map the subconscious terrain we traverse together.",
+    icon: "✶",
+  },
+  {
+    title: "Ethical guardianship",
+    description:
+      "Dreams are sacred memories. You decide who can access them, and you can withdraw them from the constellation at any time.",
+    icon: "🜂",
+  },
+  {
+    title: "Generative reflection",
+    description:
+      "Machine intelligence refracts your visions into reflections, prompts, and visual companions that invite deeper interpretation.",
+    icon: "🜁",
+  },
+];
 
 export default function AboutPage() {
-  const [mounted, setMounted] = useState(false);
-  const [motes, setMotes] = useState<
-    { top: string; left: string; w: number; h: number }[]
-  >([]);
-
-  useEffect(() => {
-    setMounted(true);
-    const newMotes = Array.from({ length: 20 }).map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      w: Math.random() * 8 + 2,
-      h: Math.random() * 8 + 2,
-    }));
-    setMotes(newMotes);
-  }, []);
-
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#060318] via-[#0a0626] to-[#0e0a3a] text-white relative overflow-hidden px-6">
-      {/* Background gradients */}
-      <div className="absolute inset-0 -z-20">
-        <div className="absolute w-[90vw] h-[90vw] top-[-10vw] left-1/2 -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-fuchsia-600/30 via-indigo-800/20 to-transparent blur-[160px] animate-pulse-slowest" />
-        <div className="absolute w-[70vw] h-[70vw] bottom-[-20vw] right-1/2 translate-x-1/3 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-700/20 via-violet-800/10 to-transparent blur-[200px] animate-pulse-slower" />
-      </div>
+    <main className="relative min-h-screen overflow-hidden text-white">
+      <SpectralBackdrop className="opacity-75" />
 
-      {/* Floating motes */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {motes.map((m, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: [0.1, 0.5, 0.1],
-              y: [0, -10, 0],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 12,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "easeInOut",
-            }}
-            className="absolute rounded-full bg-fuchsia-400/10 blur-md"
-            style={{
-              top: m.top,
-              left: m.left,
-              width: `${m.w}px`,
-              height: `${m.h}px`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Content Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="bg-slate-900/50 p-10 rounded-2xl border border-slate-700 shadow-lg backdrop-blur-xl w-full max-w-2xl relative z-10"
-      >
-        <h1 className="text-4xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-indigo-400 to-violet-400">
-          About Dreamscape AI
-        </h1>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 1.2 }}
-          className="text-gray-300 leading-relaxed text-lg text-center"
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-16 px-6 py-20 md:py-28">
+        <motion.header
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mx-auto max-w-3xl text-center space-y-6"
         >
-          Dreamscape AI is a collective experiment in mapping the subconscious.
-          Every dream you share contributes to a living atlas of symbols,
-          sensations, and stories — a fusion of memory, myth, and machine.
-          Your privacy is sacred: you decide whether to keep your dreams
-          personal or merge them into the shared collective consciousness.
-        </motion.p>
+          <p className="text-xs uppercase tracking-[0.4em] text-white/40">
+            About Dreamscape
+          </p>
+          <h1 className="text-4xl font-semibold text-white/90 md:text-6xl">
+            A Living Atlas of the Subconscious
+          </h1>
+          <p className="text-base leading-relaxed text-white/65">
+            Dreamscape AI is part ritual, part research lab. We invite dreamers
+            to chronicle their night worlds and watch as patterns bloom across
+            cultures, histories, and emotional spectra.
+          </p>
+        </motion.header>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 1.2 }}
-          className="mt-6 text-gray-400 text-center text-sm"
+        <section className="grid gap-8 md:grid-cols-3">
+          {pillars.map((pillar, index) => (
+            <motion.article
+              key={pillar.title}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: index * 0.15 }}
+              className="flex flex-col gap-4 rounded-3xl border border-white/12 bg-white/6 px-6 py-8 backdrop-blur"
+            >
+              <span className="text-2xl text-white/60">{pillar.icon}</span>
+              <h2 className="text-lg font-semibold text-white/85 uppercase tracking-[0.2em]">
+                {pillar.title}
+              </h2>
+              <p className="text-sm leading-relaxed text-white/70">
+                {pillar.description}
+              </p>
+            </motion.article>
+          ))}
+        </section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="rounded-3xl border border-white/10 bg-white/5 px-8 py-10 text-white/70 backdrop-blur"
         >
-          This project is part art, part science — an ongoing experiment in
-          decoding the architecture of dreams.
-        </motion.p>
-      </motion.div>
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="space-y-3">
+              <h3 className="text-sm uppercase tracking-[0.3em] text-white/45">
+                Why dreams matter
+              </h3>
+              <p className="text-sm leading-relaxed">
+                Dreams encode emotional processing, pattern recognition, and
+                myth-making in real time. By weaving them together, we glimpse
+                emergent archetypes that shape collective futures.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-sm uppercase tracking-[0.3em] text-white/45">
+                What we build next
+              </h3>
+              <p className="text-sm leading-relaxed">
+                Upcoming experiments include guided dream circles, visual
+                synthesis from recurring symbols, and integrations with mindful
+                sleep rituals.
+              </p>
+            </div>
+          </div>
+        </motion.section>
+      </div>
     </main>
   );
 }

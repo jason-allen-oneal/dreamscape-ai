@@ -1,83 +1,141 @@
 "use client";
-import { motion } from "framer-motion";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+import { Button } from "@/components/ui/Button";
+import { Dream, Media, DreamTag, TagDictionary } from "@prisma/client";
+
+type DreamWithRelations = Dream & {
+  mediaItems?: Media[];
+  tags?: (DreamTag & { tagDictionary: TagDictionary })[];
+  intensity?: number | null;
+};
 
 export default function DashboardDreamsPage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [dreams, setDreams] = useState<any[]>([]);
+  const [dreams, setDreams] = useState<DreamWithRelations[]>([]);
 
   useEffect(() => {
-    setMounted(true);
     fetch("/api/dreams")
-      .then((res) => res.json())
-      .then((data) => setDreams(data || []));
+      .then((response) => response.json())
+      .then((data) => setDreams(data || []))
+      .catch(() => setDreams([]));
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col items-center bg-gradient-to-b from-[#060318] via-[#0a0626] to-[#0e0a3a] text-white px-6 py-12">
-      
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1 }}
-        className="flex flex-wrap justify-center gap-4 mb-10 z-10"
-      >
-        <button
-          onClick={() => router.push("/dreams/new")}
-          className="px-5 py-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 font-semibold shadow-[0_0_10px_rgba(147,51,234,0.4)] transition-all"
-        >
-          + Record Dream
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/dreams/map")}
-          className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 font-semibold shadow-[0_0_10px_rgba(79,70,229,0.4)] transition-all"
-        >
-          🪐 Dream Atlas
-        </button>
-      </motion.div>
+    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+      <SpectralBackdrop className="opacity-75" />
 
-      {/* Dream Grid */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={mounted ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-        className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-6xl z-10"
-      >
-        {dreams.length === 0 ? (
-          <p className="text-gray-400 text-center col-span-full">
-            No dreams yet. Start recording one.
-          </p>
-        ) : (
-          dreams.map((d, i) => (
-            <motion.div
-              key={d.id || i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 * i }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: "0 0 20px rgba(147,51,234,0.4)",
-              }}
-              className="bg-slate-900/50 p-5 rounded-xl border border-slate-700 backdrop-blur-xl cursor-pointer hover:border-fuchsia-500/40 transition-all"
-              onClick={() => router.push(`/dreams/${d.id}`)}
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-12">
+        <header className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40">
+              Personal archive
+            </p>
+            <h1 className="text-4xl font-semibold text-white/90">
+              Your Dream Ledger
+            </h1>
+            <p className="max-w-xl text-sm leading-relaxed text-white/65">
+              Revisit every recorded vision, follow threads of emotion, and dive
+              back into the details with a single click.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" size="lg" onClick={() => router.push("/dreams/new")}>
+              Record Dream
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              intent="secondary"
+              onClick={() => router.push("/dashboard/dreams/map")}
             >
-              <h2 className="text-lg font-semibold mb-1 text-fuchsia-300">
-                {d.summary || "Untitled Dream"}
+              View Atlas
+            </Button>
+          </div>
+        </header>
+
+        {dreams.length === 0 ? (
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur">
+            <span className="text-4xl">☾</span>
+            <h2 className="text-2xl font-semibold text-white/85">No entries yet</h2>
+            <p className="text-sm text-white/65">
+              Your subconscious ledger is quiet. Record the next dream you recall
+              and it will shimmer into this archive.
+            </p>
+            <button
+              onClick={() => router.push("/dreams/new")}
+              className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-xs uppercase tracking-[0.3em] text-white/80 transition hover:border-white/35 hover:bg-white/15"
+            >
+              Start recording
+            </button>
+          </div>
+        ) : (
+          <motion.section
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9 }}
+            className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {dreams.map((dream, index) => {
+              const intensity =
+                typeof dream.intensity === "number"
+                  ? Math.round(dream.intensity * 100)
+                  : null;
+
+              return (
+              <motion.button
+                key={dream.id}
+                type="button"
+                onClick={() => router.push(`/dreams/${dream.id}`)}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: index * 0.06 }}
+                className="group h-full rounded-3xl border border-white/12 bg-white/6 px-6 py-6 text-left text-white/75 backdrop-blur transition hover:border-white/35 hover:bg-white/10"
+              >
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-white/45">
+                  <span>{new Date(dream.createdAt).toLocaleDateString()}</span>
+                <span>{dream.emotion?.toLowerCase() ?? "unknown"}</span>
+              </div>
+              <h2 className="mt-4 text-lg font-semibold text-white/90">
+                {dream.summary || "Untitled Dream"}
               </h2>
-              <p className="text-xs text-gray-400 mb-2">
-                {new Date(d.createdAt).toLocaleString()}
+              <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-white/70">
+                {dream.rawText}
               </p>
-              <p className="text-sm text-gray-300 line-clamp-3">{d.rawText}</p>
-              <p className="text-xs mt-2 text-fuchsia-400">
-                Emotion: {d.emotion || "Unknown"}
-              </p>
-            </motion.div>
-          ))
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/45">
+                  {intensity !== null && (
+                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-white/70">
+                      {intensity}% intensity
+                    </span>
+                  )}
+                  {dream.tags?.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-white/60"
+                    >
+                      #{tag.tagDictionary.value}
+                    </span>
+                  ))}
+                  {dream.tags && dream.tags.length > 3 && (
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-white/50">
+                      +{dream.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+                <span className="mt-6 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/45">
+                  View details
+                  <span className="transition group-hover:translate-x-1">→</span>
+                </span>
+              </motion.button>
+            );
+            })}
+          </motion.section>
         )}
-      </motion.div>
+      </div>
     </main>
   );
 }

@@ -1,6 +1,5 @@
 
 import "./globals.css";
-import Link from "next/link";
 import { ReactNode } from "react";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/nav/Navbar";

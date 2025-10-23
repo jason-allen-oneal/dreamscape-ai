@@ -1,115 +1,148 @@
-
 "use client";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+import { Button } from "@/components/ui/Button";
+
+interface Dream {
+  id: string;
+  createdAt: string;
+  emotion?: string | null;
+  tags?: { tagDictionary: { value: string } }[];
+}
+
+const toolbarActions = [
+  {
+    label: "Record Dream",
+    href: "/dreams/new",
+  },
+  {
+    label: "Dream Atlas",
+    href: "/dashboard/dreams/map",
+  },
+  {
+    label: "My Dreams",
+    href: "/dashboard/dreams",
+  },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [dreams, setDreams] = useState<any[]>([]);
+  const [dreams, setDreams] = useState<Dream[]>([]);
 
   useEffect(() => {
-    setMounted(true);
-
-    // Fetch dreams from the API
     fetch("/api/dreams")
-      .then(res => res.json())
-      .then(data => setDreams(data || []))
-      .catch(err => console.error("Failed to fetch dreams:", err));
+      .then((response) => response.json())
+      .then((data) => setDreams(data || []))
+      .catch(() => setDreams([]));
   }, []);
 
-  // Compute stats
-  const totalDreams = dreams.length;
+  const stats = useMemo(() => {
+    if (dreams.length === 0) {
+      return {
+        totalDreams: 0,
+        lastDreamDate: "—",
+        mostCommonEmotion: "—",
+        recurringMotif: "—",
+      };
+    }
 
-  const lastDreamDate =
-    dreams.length > 0
-      ? new Date(dreams[0].createdAt).toLocaleDateString()
-      : "—";
+    const lastDreamDate = new Date(dreams[0].createdAt).toLocaleDateString();
+    const emotionCounts: Record<string, number> = {};
+    const motifCounts: Record<string, number> = {};
 
-  // Most common emotion
-  const emotionCounts: Record<string, number> = {};
-  dreams.forEach(d => {
-    const e = d.emotion || "Unknown";
-    emotionCounts[e] = (emotionCounts[e] || 0) + 1;
-  });
-  const mostCommonEmotion =
-    Object.keys(emotionCounts).sort(
-      (a, b) => (emotionCounts[b] || 0) - (emotionCounts[a] || 0)
-    )[0] || "Neutral";
+    dreams.forEach((dream) => {
+      const emotionKey = dream.emotion?.toLowerCase() || "unknown";
+      emotionCounts[emotionKey] = (emotionCounts[emotionKey] || 0) + 1;
 
-  // Common theme placeholder (requires tag parsing)
-  const commonTheme = "—";
+      dream.tags?.forEach((tag) => {
+        const value = tag.tagDictionary.value;
+        motifCounts[value] = (motifCounts[value] || 0) + 1;
+      });
+    });
+
+    const mostCommonEmotion =
+      Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+    const recurringMotif =
+      Object.entries(motifCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+
+    return {
+      totalDreams: dreams.length,
+      lastDreamDate,
+      mostCommonEmotion,
+      recurringMotif,
+    };
+  }, [dreams]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center bg-gradient-to-b from-[#060318] via-[#0a0626] to-[#0e0a3a] text-white relative overflow-hidden px-6 py-12">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1 }}
-        className="relative z-10 text-center mb-10"
-      >
-        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-indigo-400 to-violet-400 mb-2">
-          Your Dream Dashboard
-        </h1>
-        <p className="text-gray-400 text-sm max-w-lg mx-auto">
-          Quick stats and actions for your dream collection.
-        </p>
-      </motion.div>
+    <main className="relative min-h-screen overflow-hidden px-6 py-16 text-white">
+      <SpectralBackdrop className="opacity-75" />
 
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1, delay: 0.3 }}
-        className="flex flex-wrap justify-center gap-4 mb-10 z-10"
-      >
-        <button
-          onClick={() => router.push("/dreams/new")}
-          className="px-5 py-2 rounded-lg bg-gradient-to-r from-fuchsia-600 via-indigo-600 to-indigo-700 hover:from-fuchsia-500 hover:via-indigo-500 hover:to-indigo-600 font-semibold shadow-[0_0_10px_rgba(147,51,234,0.4)] transition-all"
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-16">
+        <motion.header
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="space-y-5 text-center md:text-left"
         >
-          + Record Dream
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/dreams/map")}
-          className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-indigo-400 to-fuchsia-500 hover:from-indigo-600 hover:via-indigo-300 hover:to-fuchsia-400 font-semibold shadow-[0_0_10px_rgba(79,70,229,0.4)] transition-all"
-        >
-          🪐 Dream Atlas
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/dreams")}
-          className="px-5 py-2 rounded-lg bg-gradient-to-r from-fuchsia-500 via-blue-500 to-teal-500 hover:from-fuchsia-400 hover:via-green-400 hover:to-teal-400 font-semibold shadow-[0_0_10px_rgba(34,197,94,0.4)] transition-all"
-        >
-          🌙 My Dreams
-        </button>
-      </motion.div>
+          <p className="text-xs uppercase tracking-[0.45em] text-white/40">
+            Dreamer Console
+          </p>
+          <h1 className="text-4xl font-semibold text-white/90 md:text-5xl">
+            Navigate Your Subconscious Archive
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-white/65 md:text-base">
+            Monitor the pulse of your dream life, revisit recurring motifs, and
+            dive back into the atlas whenever inspiration strikes.
+          </p>
+        </motion.header>
 
-      {/* Analytics Panel */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1, delay: 0.6 }}
-        className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mt-16 w-full max-w-6xl z-10"
-      >
-        {[
-          { label: "Total Dreams", value: totalDreams },
-          { label: "Avg. Emotion", value: mostCommonEmotion },
-          { label: "Common Theme", value: commonTheme },
-          { label: "Last Dream", value: lastDreamDate },
-        ].map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * i }}
-            className="bg-slate-900/40 border border-slate-800 p-4 rounded-xl text-center backdrop-blur-lg"
-          >
-            <h3 className="text-fuchsia-400 text-sm uppercase mb-1">{stat.label}</h3>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="flex flex-wrap justify-center gap-4 md:justify-start"
+        >
+          {toolbarActions.map((action) => (
+            <Button
+              key={action.href}
+              type="button"
+              size="lg"
+              onClick={() => router.push(action.href)}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </motion.div>
+
+        <motion.section
+          initial={{ opacity: 0, y: 26 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.3 }}
+          className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+        >
+          {[
+            { label: "Dreams captured", value: stats.totalDreams },
+            { label: "Recurring motif", value: stats.recurringMotif },
+            { label: "Dominant tone", value: stats.mostCommonEmotion },
+            { label: "Last entry", value: stats.lastDreamDate },
+          ].map((stat) => (
+            <article
+              key={stat.label}
+              className="rounded-3xl border border-white/12 bg-white/6 px-6 py-6 text-white/70 backdrop-blur"
+            >
+              <p className="text-xs uppercase tracking-[0.35em] text-white/40">
+                {stat.label}
+              </p>
+              <p className="mt-4 text-2xl font-semibold text-white/90">
+                {stat.value}
+              </p>
+            </article>
+          ))}
+        </motion.section>
+      </div>
     </main>
   );
 }

@@ -6,38 +6,38 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <nav className="flex items-center justify-between px-10 py-5 backdrop-blur-xl bg-slate-900/30 border-b border-slate-800/40 shadow-[0_0_20px_rgba(255,0,255,0.05)] sticky top-0 z-30">
+    <nav className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 backdrop-blur-2xl border-b border-white/10 bg-black/20">
       <Link
         href="/"
-        className="font-extrabold text-2xl tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-fuchsia-400 to-violet-400 drop-shadow-[0_0_10px_rgba(180,100,255,0.3)] hover:brightness-125 transition"
+        className="text-lg font-semibold uppercase tracking-[0.45em] text-white/70 transition hover:text-white"
       >
         Dreamscape AI
       </Link>
-      <div className="flex gap-8 text-sm font-medium text-gray-300">
-        <Link href="/dreams" className="hover:text-indigo-400 transition-colors">
+      <div className="flex gap-6 text-xs uppercase tracking-[0.35em] text-white/50">
+        <Link href="/dreams" className="transition hover:text-white/80">
           Dreams
         </Link>
-        <Link href="/world" className="hover:text-fuchsia-400 transition-colors">
+        <Link href="/world" className="transition hover:text-white/80">
           World
         </Link>
         {session ? (
           <>
-            <Link href="/dashboard" className="hover:text-indigo-400 transition-colors">
+            <Link href="/dashboard" className="transition hover:text-white/80">
               Dashboard
             </Link>
             <button
               onClick={() => signOut()}
-              className="text-red-400 hover:underline"
+              className="text-white/60 transition hover:text-white/80"
             >
               Logout
             </button>
           </>
         ) : (
           <>
-            <Link href="/login" className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors">
+            <Link href="/login" className="transition hover:text-white/80">
               Login
             </Link>
-            <Link href="/register" className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors">
+            <Link href="/register" className="transition hover:text-white/80">
               Register
             </Link>
           </>
