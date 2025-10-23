@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,21 +17,27 @@ export async function GET(req: NextRequest) {
     const sortBy = url.searchParams.get("sort") || "createdAt";
     const filterTag = url.searchParams.get("tag");
 
-    const order: any = {};
-    if (sortBy === "recent") order.createdAt = "desc";
-    else if (sortBy === "oldest") order.createdAt = "asc";
-    // default is createdAt descending
-    else order.createdAt = "desc";
+    const orderBy: Prisma.DreamOrderByWithRelationInput =
+      sortBy === "recent"
+        ? { createdAt: "desc" }
+        : sortBy === "oldest"
+        ? { createdAt: "asc" }
+        : { createdAt: "desc" };
 
-    // Build query
-    const where: any = { userId: session.user.id };
-    if (filterTag) {
-      where.tags = { some: { tagDictionary: { value: filterTag } } };
-    }
+    const where: Prisma.DreamWhereInput = {
+      userId: session.user.id,
+      ...(filterTag
+        ? {
+            tags: {
+              some: { tagDictionary: { value: filterTag } },
+            },
+          }
+        : {}),
+    };
 
     const dreams = await prisma.dream.findMany({
       where,
-      orderBy: order,
+      orderBy,
       include: {
         mediaItems: true,
         tags: { include: { tagDictionary: true } },
@@ -38,8 +45,10 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(dreams);
-  } catch (err: any) {
-    console.error("Failed to fetch dreams:", err);
-    return NextResponse.json({ error: err.message || "Failed to fetch dreams" }, { status: 500 });
+  } catch (error: unknown) {
+    console.error("Failed to fetch dreams:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch dreams";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

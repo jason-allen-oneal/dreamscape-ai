@@ -1,142 +1,79 @@
-// src/components/dream/DreamsPageClient.tsx
-
 "use client";
 
 import { motion } from "framer-motion";
-import DreamCard from "./DreamCard";
+import Link from "next/link";
 import { Dream, Media, DreamTag } from "@prisma/client";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+import DreamCard from "./DreamCard";
+
+type ExpandedDream = Dream & {
+  mediaItems?: Media[];
+  tags?: (DreamTag & { tagDictionary: { value: string; type: string } })[];
+};
 
 interface DreamsPageClientProps {
-  dreams: (Dream & { 
-    mediaItems?: Media[];
-    tags?: (DreamTag & { tagDictionary: { value: string; type: string } })[];
-  })[];
+  dreams: ExpandedDream[];
 }
 
 export default function DreamsPageClient({ dreams }: DreamsPageClientProps) {
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-[#0a0a2e] via-[#16213e] to-[#0f3460] text-white">
-      {/* Dreamy background particles */}
-      <div className="absolute inset-0">
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white/10 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1, 0],
-              y: [0, -100, -200],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+    <section className="relative min-h-screen overflow-hidden text-white">
+      <SpectralBackdrop />
 
-      {/* Floating dream orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-32 h-32 rounded-full opacity-5"
-            style={{
-              background: `radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              scale: [1, 1.5, 1],
-              opacity: [0.05, 0.1, 0.05],
-              x: [0, (Math.random() - 0.5) * 100],
-              y: [0, (Math.random() - 0.5) * 100],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 4,
-              repeat: Infinity,
-              repeatType: "mirror",
-              delay: i * 0.5,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Header */}
-      <motion.div
-        className="relative z-10 text-center pt-16 pb-8"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-      >
-        <motion.h1 
-          className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 mb-4"
-          animate={{
-            y: [0, -5, 0],
-            opacity: [0.8, 1, 0.8],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "mirror",
-          }}
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-6 py-16">
+        <motion.header
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mx-auto max-w-3xl text-center space-y-6"
         >
-          🌙 Shared Dreams ✨
-        </motion.h1>
-        <motion.p 
-          className="text-lg text-cyan-200/70 max-w-2xl mx-auto"
-          animate={{
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            repeatType: "mirror",
-          }}
-        >
-          Explore the collective unconscious - dreams shared by dreamers around the world
-        </motion.p>
-      </motion.div>
+          <p className="text-xs uppercase tracking-[0.5em] text-white/40">
+            Collective Atlas
+          </p>
+          <h1 className="text-4xl font-semibold text-white/90 md:text-6xl">
+            Shared Dream Archive
+          </h1>
+          <p className="text-base leading-relaxed text-white/65">
+            Drift through visions released by dreamers across the world. Each
+            entry shimmers with its own emotional hue and recurring motifs.
+          </p>
+        </motion.header>
 
-      {/* Dreams Grid */}
-      <div className="relative z-10 px-6 pb-16">
         {dreams.length === 0 ? (
-          <motion.div 
-            className="text-center py-20"
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 0.8 }}
+            className="mx-auto flex max-w-lg flex-col items-center gap-6 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur"
           >
-            <motion.div
-              className="text-6xl mb-6"
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              🌌
-            </motion.div>
-            <p className="text-cyan-300 text-xl mb-4 font-medium">The dream realm slumbers...</p>
-            <p className="text-cyan-200/70 text-sm max-w-md mx-auto">
-              No shared dreams have been recorded yet. The cosmic dream realm awaits the first brave dreamer to share their vision.
+            <span className="text-5xl">🜁</span>
+            <h2 className="text-2xl font-semibold text-white/85">
+              The archive awaits its first offering
+            </h2>
+            <p className="text-sm leading-relaxed text-white/65">
+              When someone shares their dream with the collective, their story
+              will bloom here as a new luminous constellation.
             </p>
+            <Link
+              href="/dreams/new"
+              className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-xs uppercase tracking-[0.3em] text-white/80 transition hover:border-white/35 hover:bg-white/15"
+            >
+              Record a dream
+            </Link>
           </motion.div>
         ) : (
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
+            transition={{ duration: 0.9, delay: 0.2 }}
+            className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3"
           >
             {dreams.map((dream, index) => (
               <motion.div
                 key={dream.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: 0.7, delay: index * 0.08 }}
               >
                 <DreamCard dream={dream} />
               </motion.div>
@@ -144,6 +81,6 @@ export default function DreamsPageClient({ dreams }: DreamsPageClientProps) {
           </motion.div>
         )}
       </div>
-    </main>
+    </section>
   );
 }

@@ -1,19 +1,23 @@
+import type { ButtonHTMLAttributes } from "react";
 import { cva, VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonStyles = cva(
-  "inline-flex items-center justify-center rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500",
+  "inline-flex items-center justify-center rounded-full font-semibold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 disabled:opacity-45 disabled:cursor-not-allowed",
   {
     variants: {
       intent: {
-        primary: "bg-indigo-600 text-white hover:bg-indigo-500",
-        secondary: "bg-slate-800 text-gray-200 hover:bg-slate-700",
-        ghost: "bg-transparent text-gray-300 hover:bg-slate-800",
+        primary:
+          "bg-gradient-to-r from-fuchsia-600 via-indigo-600 to-sky-500 text-white shadow-[0_12px_40px_rgba(99,102,241,0.25)] hover:shadow-[0_18px_45px_rgba(236,72,153,0.35)]",
+        secondary:
+          "border border-white/20 bg-white/10 text-white/80 backdrop-blur hover:border-white/35 hover:bg-white/15",
+        ghost:
+          "text-white/70 hover:text-white hover:bg-white/10 border border-transparent",
       },
       size: {
-        sm: "px-3 py-1 text-sm",
-        md: "px-4 py-2",
-        lg: "px-6 py-3 text-lg",
+        sm: "px-4 py-2 text-xs uppercase tracking-[0.3em]",
+        md: "px-6 py-2.5 text-sm uppercase tracking-[0.3em]",
+        lg: "px-8 py-3 text-sm uppercase tracking-[0.4em]",
       },
     },
     defaultVariants: {
@@ -24,7 +28,7 @@ const buttonStyles = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonStyles> {}
 
 export const Button = ({ className, intent, size, ...props }: ButtonProps) => (

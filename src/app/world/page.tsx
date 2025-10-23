@@ -1,12 +1,11 @@
-
-// src/app/world/page.tsx
-
 "use client";
+
+import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
-import { Suspense, useEffect, useState } from "react";
-import DreamWorld from "@/components/world/WorldScene";
 import { motion } from "framer-motion";
+import DreamWorld from "@/components/world/WorldScene";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
 
 interface WorldData {
   atmosphere: string;
@@ -41,108 +40,145 @@ export default function WorldPage() {
   }, []);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden">
-      {/* 3D Canvas */}
-      <Canvas camera={{ position: [0, 5, 15], fov: 60 }}>
-        <color attach="background" args={["#030314"]} />
-        <Suspense fallback={null}>
-          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-          <DreamWorld />
-          <ambientLight intensity={0.3} />
-          <pointLight position={[10, 10, 10]} intensity={0.8} color="#a855f7" />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#06b6d4" />
-        </Suspense>
-        <OrbitControls 
-          enableZoom={true}
-          enablePan={true}
-          minDistance={5}
-          maxDistance={50}
-        />
-      </Canvas>
+    <main className="relative h-screen w-screen overflow-hidden text-white">
+      <SpectralBackdrop className="opacity-40" />
 
-      {/* Info Panel */}
+      <div className="absolute inset-0 z-10">
+        <Canvas camera={{ position: [0, 5, 15], fov: 60 }}>
+          <color attach="background" args={["#030314"]} />
+          <Suspense fallback={null}>
+            <Stars
+              radius={100}
+              depth={50}
+              count={5000}
+              factor={4}
+              saturation={0}
+              fade
+              speed={1}
+            />
+            <DreamWorld />
+            <ambientLight intensity={0.35} />
+            <pointLight position={[10, 12, 10]} intensity={0.9} color="#a855f7" />
+            <pointLight position={[-10, -6, -12]} intensity={0.5} color="#06b6d4" />
+          </Suspense>
+          <OrbitControls enableZoom enablePan minDistance={5} maxDistance={50} />
+        </Canvas>
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, x: -100 }}
-        animate={{ opacity: showInfo ? 1 : 0.3, x: 0 }}
+        initial={{ opacity: 0, x: -80 }}
+        animate={{ opacity: showInfo ? 1 : 0.25, x: 0 }}
         transition={{ duration: 0.8 }}
-        className="absolute top-6 left-6 max-w-md bg-slate-900/80 backdrop-blur-xl border border-fuchsia-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(147,51,234,0.3)]"
+        className="absolute left-6 top-6 max-w-md rounded-2xl border border-white/12 bg-black/40 px-6 py-6 backdrop-blur"
         onMouseEnter={() => setShowInfo(true)}
         onMouseLeave={() => setShowInfo(true)}
       >
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-cyan-300 to-purple-300 mb-4">
-          🌌 The Dream World
+        <h1 className="mb-4 text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-sky-200 via-fuchsia-200 to-violet-200">
+          🌌 Collective Dreamscape
         </h1>
-        
         {loading ? (
-          <div className="text-cyan-200/70 animate-pulse">Loading dreamscape...</div>
+          <p className="text-sm text-white/60">Scrying the dream currents...</p>
         ) : worldData ? (
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="text-fuchsia-300 font-semibold mb-1">Atmosphere</h3>
-              <p className="text-cyan-100/80 text-xs leading-relaxed">{worldData.atmosphere}</p>
-            </div>
+          <div className="space-y-4 text-sm text-white/75">
+            <section>
+              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
+                Atmosphere
+              </h2>
+              <p className="text-xs leading-relaxed text-white/70">
+                {worldData.atmosphere}
+              </p>
+            </section>
 
-            <div>
-              <h3 className="text-fuchsia-300 font-semibold mb-1">Dominant Themes</h3>
+            <section>
+              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
+                Dominant Themes
+              </h2>
               <div className="flex flex-wrap gap-2">
-                {worldData.themes.map((theme, i) => (
+                {worldData.themes.map((theme, index) => (
                   <span
-                    key={i}
-                    className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30 text-cyan-200"
+                    key={`${theme}-${index}`}
+                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.35em] text-white/65"
                   >
                     {theme}
                   </span>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div>
-              <h3 className="text-fuchsia-300 font-semibold mb-1">Emotional Landscape</h3>
-              <p className="text-cyan-100/80 text-xs leading-relaxed">{worldData.emotionalLandscape}</p>
-            </div>
-
-            <div>
-              <h3 className="text-fuchsia-300 font-semibold mb-1">Visual Elements</h3>
-              <div className="space-y-1 text-xs">
-                <div className="flex gap-2 items-center">
-                  <span className="text-cyan-200/70">Colors:</span>
-                  <div className="flex gap-1">
-                    {worldData.visualElements.colors.map((color, i) => (
-                      <span key={i} className="text-cyan-100/90">{color}</span>
-                    )).reduce((prev, curr) => <>{prev}, {curr}</>)}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-fuchsia-300 font-semibold mb-1">Characteristics</h3>
-              <p className="text-cyan-100/80 text-xs leading-relaxed">{worldData.characteristics}</p>
-            </div>
-
-            <div className="pt-4 border-t border-fuchsia-500/20">
-              <p className="text-cyan-200/70 text-xs">
-                <span className="font-semibold text-fuchsia-300">{dreamCount}</span> dreams 
-                have shaped this realm
+            <section>
+              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
+                Emotional Landscape
+              </h2>
+              <p className="text-xs leading-relaxed text-white/70">
+                {worldData.emotionalLandscape}
               </p>
+            </section>
+
+            <section className="space-y-1 text-xs text-white/70">
+              <h2 className="text-xs uppercase tracking-[0.35em] text-white/45">
+                Visual Elements
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {worldData.visualElements.colors.map((color, index) => (
+                  <span key={`color-${index}`} className="text-white/60">
+                    {color}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {worldData.visualElements.motifs.map((motif, index) => (
+                  <span key={`motif-${index}`} className="text-white/60">
+                    {motif}
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
+                Characteristics
+              </h2>
+              <p className="text-xs leading-relaxed text-white/70">
+                {worldData.characteristics}
+              </p>
+            </section>
+
+            {worldData.entities.length > 0 && (
+              <section>
+                <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
+                  Entities
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {worldData.entities.map((entity, index) => (
+                    <span
+                      key={`entity-${index}`}
+                      className="rounded-full border border-white/15 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.35em] text-white/60"
+                    >
+                      {entity}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <div className="pt-4 text-xs uppercase tracking-[0.3em] text-white/50">
+              {dreamCount} dreams compose this realm
             </div>
           </div>
         ) : (
-          <div className="text-cyan-200/70">
-            <p className="mb-2">The dream world awaits...</p>
-            <p className="text-xs">Share your dreams to help shape this collective dreamscape.</p>
-          </div>
+          <p className="text-sm text-white/60">
+            Share your visions to awaken this collective landscape.
+          </p>
         )}
       </motion.div>
 
-      {/* Controls hint */}
       <motion.div
-        initial={{ opacity: 0, y: 100 }}
+        initial={{ opacity: 0, y: 60 }}
         animate={{ opacity: 0.7, y: 0 }}
-        transition={{ duration: 1, delay: 1 }}
-        className="absolute bottom-6 right-6 bg-slate-900/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl px-4 py-2 text-xs text-cyan-200/70"
+        transition={{ duration: 0.8, delay: 0.8 }}
+        className="absolute bottom-6 right-6 rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.35em] text-white/55 backdrop-blur"
       >
-        🖱️ Click and drag to explore • Scroll to zoom
+        Drag to orbit • Scroll to descend
       </motion.div>
     </main>
   );

@@ -5,22 +5,20 @@ import { Agent, run } from "@/lib/gemini";
 
 export async function GET() {
   try {
-    // Fetch all world-visible dreams
     const dreams = await prisma.dream.findMany({
       where: { visibility: "WORLD" },
       include: {
         mediaItems: true,
         tags: {
           include: {
-            tagDictionary: true
-          }
-        }
+            tagDictionary: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
-      take: 50, // Limit to last 50 dreams for performance
+      take: 50,
     });
 
-    // Create a world synthesis agent
     const worldAgent = new Agent({
       name: "Dream World Synthesizer",
       instructions: `
@@ -46,57 +44,48 @@ Return a JSON object with these fields:
   "entities": ["entity1", "entity2"],
   "characteristics": "description"
 }
+Ensure the JSON is valid and parseable.
       `,
       tools: [],
     });
 
-    // Prepare dream data for synthesis
-    const dreamSummaries = dreams.slice(0, 20).map(d => ({
-      summary: d.summary,
-      emotion: d.emotion,
-      tags: d.tags?.map(t => t.tagDictionary.value).join(", "),
-      intensity: d.intensity,
-    }));
+    const dreamSummaries = dreams
+      .map(
+        (dream) => `
+Dream Summary: ${dream.summary || "Untitled"}
+Dream Content: ${dream.rawText}
+Emotion: ${dream.emotion || "Unknown"}
+Tags: ${dream.tags
+          ?.map((tag) => tag.tagDictionary.value)
+          .join(", ") || "None"}
+      `.trim(),
+      )
+      .join("\n\n---\n\n");
 
-    const prompt = `Synthesize a dream world from these dreams:\n\n${JSON.stringify(dreamSummaries, null, 2)}`;
+    const synthesis = await run(worldAgent, dreamSummaries || "No dreams found.");
 
-    let worldData = {
-      atmosphere: "A mysterious twilight realm where consciousness drifts",
-      themes: ["transformation", "exploration", "connection"],
-      emotionalLandscape: "Ethereal and introspective",
-      visualElements: {
-        colors: ["deep purple", "cyan", "fuchsia"],
-        motifs: ["floating particles", "nebular clouds", "crystalline structures"]
-      },
-      entities: ["dream wanderers", "memory echoes", "symbolic guardians"],
-      characteristics: "A space where time flows like water and thoughts become tangible"
-    };
-
-    if (dreams.length > 0) {
-      try {
-        const synthesisResult = await run(worldAgent, prompt);
-        // Try to parse the result as JSON
-        const jsonMatch = synthesisResult.finalOutput.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          worldData = JSON.parse(jsonMatch[0]);
-        }
-      } catch (err) {
-        console.warn("Failed to synthesize world data, using defaults", err);
-      }
+    let worldData = null;
+    try {
+      worldData = JSON.parse(synthesis.finalOutput);
+    } catch {
+      worldData = {
+        atmosphere: "A quiet void awaiting shared visions.",
+        themes: [],
+        emotionalLandscape: "Dormant.",
+        visualElements: { colors: [], motifs: [] },
+        entities: [],
+        characteristics:
+          "The world is still forming, waiting for dreamers to contribute.",
+      };
     }
 
     return NextResponse.json({
       worldData,
       dreamCount: dreams.length,
-      recentDreams: dreams.slice(0, 10).map(d => ({
-        id: d.id,
-        summary: d.summary,
-        emotion: d.emotion,
-        intensity: d.intensity,
-      })),
     });
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch world data";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to synthesize dream world";
     console.error(err);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

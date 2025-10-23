@@ -1,109 +1,114 @@
-
 "use client";
+
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+const heroStats = [
+  { label: "Dreams mapped", value: "18,204" },
+  { label: "Active dreamers", value: "2,476" },
+  { label: "Shared motifs", value: "643" },
+];
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const [particles, setParticles] = useState<
-    { top: string; left: string; width: string; height: string; delay: number; duration: number }[]
-  >([]);
-
-  useEffect(() => {
-    const p = Array.from({ length: 30 }).map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      width: `${Math.random() * 8 + 2}px`,
-      height: `${Math.random() * 8 + 2}px`,
-      delay: Math.random() * 5,
-      duration: 12 + Math.random() * 10,
-    }));
-    setParticles(p);
-  }, []);
-
   return (
-    <main className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-gradient-to-b from-[#050218] via-[#090524] to-[#0d0a3a] text-white">
-      {/* Nebula / aurora gradients */}
-      <div className="absolute inset-0 -z-20 overflow-hidden">
-        <div className="absolute w-[90vw] h-[90vw] top-[-15vw] left-1/2 -translate-x-1/2 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-fuchsia-600/30 via-indigo-700/20 to-transparent blur-[160px] animate-pulse-slowest" />
-        <div className="absolute w-[70vw] h-[70vw] bottom-[-10vw] right-[-20vw] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500/20 via-violet-700/10 to-transparent blur-[200px] animate-pulse-slower" />
-      </div>
+    <main className="relative flex min-h-screen flex-col overflow-hidden text-white">
+      <SpectralBackdrop className="opacity-80" />
 
-      {/* Floating motes */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {particles.map((p, i) => (
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 gap-16 px-6 py-20 md:grid-cols-[1.1fr_0.9fr] md:py-28">
+        <section className="flex flex-col justify-center gap-10">
           <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.1, 0.5, 0.1] }}
-            transition={{
-              duration: p.duration,
-              repeat: Infinity,
-              delay: p.delay,
-            }}
-            className="absolute rounded-full bg-fuchsia-400/10 blur-md"
-            style={p}
-          />
-        ))}
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="space-y-6"
+          >
+            <p className="text-xs uppercase tracking-[0.45em] text-white/40">
+              Dreamscape AI
+            </p>
+            <h1 className="text-4xl font-semibold text-white/90 md:text-6xl">
+              Chart the Hypnagogic Field
+            </h1>
+            <p className="max-w-xl text-base leading-relaxed text-white/65">
+              Weaves of memory, instinct, and machine learning form a living
+              atlas of human subconsciousness. Share your night journeys and
+              navigate the collective constellation of motifs.
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs uppercase tracking-[0.35em]">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-600 via-indigo-600 to-sky-500 px-8 py-3 text-white shadow-[0_12px_40px_rgba(99,102,241,0.25)] transition hover:shadow-[0_18px_45px_rgba(236,72,153,0.35)]"
+              >
+                Enter the Dream
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-8 py-3 text-white/80 backdrop-blur transition hover:border-white/35 hover:bg-white/15"
+              >
+                Learn More
+              </Link>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.3 }}
+            className="grid gap-4 text-sm text-white/65 sm:grid-cols-3"
+          >
+            {heroStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-white/12 bg-white/6 px-5 py-4 backdrop-blur"
+              >
+                <p className="text-xs uppercase tracking-[0.35em] text-white/40">
+                  {stat.label}
+                </p>
+                <p className="mt-3 text-2xl font-semibold text-white/90">
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+        </section>
+
+        <motion.section
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          className="relative flex items-center justify-center"
+        >
+          <div className="relative h-full w-full max-w-lg">
+            <div className="absolute inset-0 rounded-[32px] border border-white/10 bg-white/8 backdrop-blur-xl" />
+            <div className="absolute inset-6 rounded-[28px] border border-white/8 bg-[#020010]/70 backdrop-blur-xl" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                className="h-64 w-64 rounded-full bg-gradient-to-br from-fuchsia-500/20 via-indigo-500/20 to-cyan-400/20 blur-2xl"
+                animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.9, 1.1, 0.9] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+            <motion.div
+              className="absolute inset-10 flex flex-col justify-between p-8 text-sm text-white/75"
+              animate={{ opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-white/45">
+                  Current pulse
+                </p>
+                <p className="mt-3 text-lg text-white/85">
+                  Fear and curiosity entwine across dream clusters tonight. New
+                  motifs: tidal staircases, candle wings.
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-white/45">
+                <span>Entropy sync</span>
+                <span>94%</span>
+              </div>
+            </motion.div>
+          </div>
+        </motion.section>
       </div>
-
-      {/* Dream title */}
-      <motion.h1
-        initial={{ opacity: 0, y: 40 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1.6, ease: "easeOut" }}
-        className="text-7xl md:text-8xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-fuchsia-400 to-violet-400 drop-shadow-[0_0_25px_rgba(180,100,255,0.4)]"
-      >
-        Dreamscape AI
-      </motion.h1>
-
-      {/* Subheading */}
-      <motion.p
-        initial={{ opacity: 0, y: 30 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1.8, ease: "easeOut", delay: 0.4 }}
-        className="max-w-2xl mt-6 text-center text-lg text-gray-300 leading-relaxed"
-      >
-        A collective atlas of dreams — where imagination, memory, and machine intelligence merge.
-      </motion.p>
-
-      {/* Buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1.8, delay: 0.8, ease: "easeOut" }}
-        className="mt-10 flex gap-6"
-      >
-        <a
-          href="/login"
-          className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 shadow-[0_0_15px_rgba(147,51,234,0.4)] hover:shadow-[0_0_25px_rgba(147,51,234,0.7)] transition-all duration-300 text-lg font-medium"
-        >
-          Enter the Dream
-        </a>
-        <a
-          href="/about"
-          className="px-8 py-3 rounded-xl border border-fuchsia-500/40 text-fuchsia-300 hover:bg-fuchsia-800/20 transition-all duration-300 text-lg font-medium"
-        >
-          Learn More
-        </a>
-      </motion.div>
-
-      {/* Floating “orb” of consciousness */}
-      <motion.div
-        className="absolute w-64 h-64 bg-gradient-to-br from-fuchsia-500/10 to-indigo-400/5 blur-[120px] rounded-full mix-blend-screen -z-10"
-        animate={{
-          x: [0, 40, -40, 0],
-          y: [0, 20, -20, 0],
-          opacity: [0.4, 0.7, 0.5, 0.4],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
     </main>
   );
 }
