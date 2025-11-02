@@ -1,11 +1,6 @@
 // src/app/api/world/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import Agent from "@/lib/gemini";
-import { updateConfig } from "@/lib/utils";
 import { test } from "@/lib/testDreams";
-import fs from "fs";
-import path from "path";
 import { generateWorld } from "@/lib/utils";
 
 export async function GET() {
