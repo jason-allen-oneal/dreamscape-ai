@@ -1,5 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleAuth } from 'google-auth-library';
 import * as fs from "fs";
 import path from "path";
 import { sleep } from "@/lib/utils";
@@ -10,16 +11,19 @@ class Agent {
     vertexAI: VertexAI;
     modelId: string;
     model: any;
+    location: string;
+    projectId: string | undefined;
 
     constructor() {
-        const projectId = process.env.PROJECT_ID;
+        this.projectId = process.env.PROJECT_ID;
+        this.location = "us-central1";
         this.modelId = "";
         this.genAI = new GoogleGenAI({
             vertexai: true,
-            project: projectId,
-            location: "us-central1",
+            project: this.projectId,
+            location: this.location,
         });
-        this.vertexAI = new VertexAI({ project: projectId, location: "us-central1" });
+        this.vertexAI = new VertexAI({ project: this.projectId, location: this.location });
         this.model = this.vertexAI.getGenerativeModel({ model: process.env.MUSIC_MODEL! });
     }
 
@@ -171,12 +175,11 @@ ${prompt}
 
     async getMusic(prompt: string) {
         const musicModel = process.env.MUSIC_MODEL;
-        const projectId = process.env.PROJECT_ID;
         
         if (!musicModel) {
             throw new Error("MUSIC_MODEL env is not set");
         }
-        if (!projectId) {
+        if (!this.projectId) {
             throw new Error("PROJECT_ID env is not set");
         }
 
@@ -189,7 +192,6 @@ ${prompt}
 
         try {
             // Get access token for authentication
-            const { GoogleAuth } = require('google-auth-library');
             const auth = new GoogleAuth({
                 scopes: ['https://www.googleapis.com/auth/cloud-platform']
             });
@@ -200,9 +202,8 @@ ${prompt}
                 throw new Error("Failed to get access token");
             }
 
-            // Construct the API endpoint
-            const location = 'us-central1';
-            const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${musicModel}:predict`;
+            // Construct the API endpoint using class properties
+            const endpoint = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${musicModel}:predict`;
 
             // Make the prediction request
             const requestBody = {
@@ -238,9 +239,12 @@ ${prompt}
             }
 
             const prediction = result.predictions[0];
+            // Lyria API returns audio content in bytesBase64Encoded field (standard),
+            // but some versions may use audioContent field (fallback)
             const audioContent = prediction.bytesBase64Encoded || prediction.audioContent;
             
             if (!audioContent) {
+                console.warn('Lyria response prediction:', JSON.stringify(prediction, null, 2));
                 throw new Error("No audio content found in prediction");
             }
 
