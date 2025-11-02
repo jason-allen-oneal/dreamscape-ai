@@ -96,19 +96,22 @@ export async function run(agent: Agent, input: string): Promise<AgentOutput> {
 
 // Default agent class for media generation
 class MediaGenerationAgent {
-    genAI: GoogleGenAI;
+    private genAI: GoogleGenAI | null = null;
 
-    constructor() {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new Error("GEMINI_API_KEY environment variable is required for media generation");
+    private getClient(): GoogleGenAI {
+        if (!this.genAI) {
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (!apiKey) {
+                throw new Error("GEMINI_API_KEY environment variable is required for media generation");
+            }
+            this.genAI = new GoogleGenAI({ apiKey });
         }
-        this.genAI = new GoogleGenAI({ apiKey });
+        return this.genAI;
     }
 
     async getDescription(dreams: string): Promise<string> {
         const model = process.env.GEN_MODEL || "gemini-1.5-flash";
-        const response = await this.genAI.models.generateContent({
+        const response = await this.getClient().models.generateContent({
             model,
             contents: dreams,
             config: {
@@ -133,14 +136,14 @@ class MediaGenerationAgent {
         return response.text || "";
     }
 
-    async getVideo(_prompt: string, _img: string | null = null): Promise<string> {
+    async getVideo(_prompt: string, _img?: string | null): Promise<string> {
         // Video generation is expensive and disabled for free tier
         // Return empty string to indicate no video generated
         console.log("Video generation is disabled (expensive)");
         return "";
     }
 
-    async getImage(type: string, _prompt: string, _img: { data: string; mimeType: string; } | null = null): Promise<string> {
+    async getImage(type: string, _prompt: string, _img?: { data: string; mimeType: string; } | null): Promise<string> {
         // Image generation is expensive and disabled for free tier
         // Return empty string to indicate no image generated
         console.log(`Image generation (${type}) is disabled (expensive)`);
