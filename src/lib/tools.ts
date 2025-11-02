@@ -1,5 +1,7 @@
 import { TagType, TagDictionary, DreamTag } from "@prisma/client";
 import prisma from "./prisma";
+import type { Schema } from "@google/genai";
+import { Type } from "@google/genai";
 
 export interface CreateTagArgs {
   type: TagType;
@@ -12,8 +14,8 @@ export interface DatabaseTool {
   name: string;
   description: string;
   parameters: {
-    type: "object";
-    properties: Record<string, unknown>;
+    type: Type.OBJECT;
+    properties: Record<string, Schema>;
     required: string[];
   };
   function: (args: unknown) => Promise<{
@@ -30,12 +32,12 @@ const dbTools: DatabaseTool[] = [
     name: "createTag",
     description: "Create or fetch a tag in the database and link it to a dream",
     parameters: {
-      type: "object",
+      type: Type.OBJECT,
       properties: {
-        type: { type: "string" },
-        value: { type: "string" },
-        weight: { type: "number" },
-        dreamId: { type: "string" },
+        type: { type: Type.STRING },
+        value: { type: Type.STRING },
+        weight: { type: Type.NUMBER },
+        dreamId: { type: Type.STRING },
       },
       required: ["type", "value", "dreamId"],
     },

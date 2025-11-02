@@ -13,8 +13,8 @@ type Dream = {
     intensity: float;
     emotion: string;
     safetyFlag: boolean;
-    mediaItems: any[];
-    tags: any[];
+    mediaItems: Array<{ kind: string; url: string; mime: string }>;
+    tags: Array<{ tagDictionary?: { value: string }; value?: string }>;
 }
 
 type DreamMediaOverlay = {

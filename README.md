@@ -1,5 +1,33 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Setup
+
+This project uses **free Google Gemini APIs** to keep costs minimal. 
+
+### Required Environment Variables
+
+1. Copy `.env.example` to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. Get a **free** Gemini API key from [Google AI Studio](https://ai.google.dev/)
+
+3. Update `.env.local` with your API key:
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+### Cost-Saving Measures
+
+To keep costs at zero, expensive media generation features have been disabled:
+- ❌ Video generation (Veo) - Very expensive
+- ❌ Image generation (Imagen) - Expensive
+- ❌ Music generation (Lyria) - Expensive
+- ✅ Text generation (Gemini 1.5 Flash) - **FREE** with generous limits
+
+The application will still generate dream descriptions and analysis using the free Gemini API.
+
 ## Getting Started
 
 First, run the development server:

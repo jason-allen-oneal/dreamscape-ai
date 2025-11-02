@@ -126,8 +126,8 @@ export default function WorldPage() {
       setFloater1(normalizeMediaPath(data?.images?.[1]));
       setFloater2(normalizeMediaPath(data?.images?.[2]));
       const apiVideo = typeof data?.video === "string" ? data.video : undefined;
-      const legacyVideo = Array.isArray((data as { videos?: unknown })?.videos)
-        ? (data as { videos?: unknown }).videos?.find(
+      const legacyVideo = Array.isArray((data as { videos?: string[] })?.videos)
+        ? (data as { videos?: string[] }).videos?.find(
             (item): item is string => typeof item === "string" && item.length > 0,
           )
         : undefined;

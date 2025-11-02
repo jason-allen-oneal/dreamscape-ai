@@ -1,38 +1,31 @@
+// Re-export client-safe utilities
+export { cn, parseGeminiJSON, sleep, normalizeUrl } from "./utils-client";
+export type { WorldAssetSnapshot } from "./utils-client";
+
+// Import for local use
+import type { WorldAssetSnapshot } from "./utils-client";
+
+// Server-side utilities that use Node.js modules
 import prisma from "./prisma";
 import fs from "fs";
 import path from "path";
 import Agent from "@/lib/gemini";
 
-export function cn(...classes: (string | undefined | false)[]) {
-    return classes.filter(Boolean).join(" ");
-}
-  
-export function parseGeminiJSON(raw: string) {
-    // Remove code fences
-    const cleaned = raw
-      .replace(/```json/, "")
-      .replace(/```/g, "")
-      .trim();
-    return JSON.parse(cleaned);
+// Dream type for world generation
+interface DreamTag {
+  tagDictionary?: {
+    value: string;
+  };
+  value?: string;
 }
 
-export async function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-export interface WorldAssetSnapshot {
-  background?: string;
-  floating1?: string;
-  floating2?: string;
-  video?: string;
-  music?: string;
-}
-
-export function normalizeUrl(url: string): string {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  if (url.startsWith("/")) return url;
-  return `/${url.replace(/^\/+/, "")}`;
+interface Dream {
+  id: string;
+  summary?: string;
+  rawText: string;
+  emotion?: string;
+  mediaItems?: Array<{ kind: string; url: string; mime: string }>;
+  tags?: DreamTag[];
 }
 
 export async function updateConfig(key: string, value: string) {
@@ -145,7 +138,7 @@ export async function generateWorld(dreams: Dream[]) {
       .map((dream) => {
         const tagValues =
           dream.tags
-            ?.map((tag: any) => tag?.tagDictionary?.value ?? tag?.value ?? "")
+            ?.map((tag: DreamTag) => tag?.tagDictionary?.value ?? tag?.value ?? "")
             .filter(Boolean) ?? [];
         const formattedTags = tagValues.length ? tagValues.join(", ") : "None";
 
