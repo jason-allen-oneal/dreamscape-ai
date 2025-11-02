@@ -1,5 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleAuth } from 'google-auth-library';
 import * as fs from "fs";
 import path from "path";
 import { sleep } from "@/lib/utils";
@@ -10,16 +11,19 @@ class Agent {
     vertexAI: VertexAI;
     modelId: string;
     model: any;
+    location: string;
+    projectId: string | undefined;
 
     constructor() {
-        const projectId = process.env.PROJECT_ID;
+        this.projectId = process.env.PROJECT_ID;
+        this.location = "us-central1";
         this.modelId = "";
         this.genAI = new GoogleGenAI({
             vertexai: true,
-            project: projectId,
-            location: "us-central1",
+            project: this.projectId,
+            location: this.location,
         });
-        this.vertexAI = new VertexAI({ project: projectId, location: "us-central1" });
+        this.vertexAI = new VertexAI({ project: this.projectId, location: this.location });
         this.model = this.vertexAI.getGenerativeModel({ model: process.env.MUSIC_MODEL! });
     }
 
@@ -171,8 +175,12 @@ ${prompt}
 
     async getMusic(prompt: string) {
         const musicModel = process.env.MUSIC_MODEL;
+        
         if (!musicModel) {
             throw new Error("MUSIC_MODEL env is not set");
+        }
+        if (!this.projectId) {
+            throw new Error("PROJECT_ID env is not set");
         }
 
         prompt = `A surreal, dream-like, atmospheric, ambient, and ethereal music piece that captures the essence of the following dream world description: ${prompt}`
@@ -182,32 +190,75 @@ ${prompt}
             fs.mkdirSync(generatedDir, { recursive: true });
         }
 
-        const request = {
-            instances: [{ prompt: prompt }],
-            parameters: {
-                // Optional: add parameters like negative_prompt, seed, sample_count
-                // negative_prompt: "drums, electric guitar",
-                // seed: 12345,
-                // sample_count: 1 // Cannot be used with seed
-            },
-        };
-
         try {
-            const result = await this.model.generateContent(request);
-            console.log('Lyria response:', JSON.stringify(result, null, 2));
-            const audio = result.predictions[0].audioContent;
-            if (!audio) {
-                throw new Error("No audio content found");
+            // Get access token for authentication
+            const auth = new GoogleAuth({
+                scopes: ['https://www.googleapis.com/auth/cloud-platform']
+            });
+            const client = await auth.getClient();
+            const accessToken = await client.getAccessToken();
+
+            if (!accessToken.token) {
+                throw new Error("Failed to get access token");
             }
-            const buffer = Buffer.from(audio, "base64");
-            const ext = audio.inlineData!.mimeType?.split("/")[1] || "wav";
-            const fileName = `music.${ext}`;
+
+            // Construct the API endpoint using class properties
+            const endpoint = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${musicModel}:predict`;
+
+            // Make the prediction request
+            const requestBody = {
+                instances: [{ prompt: prompt }],
+                parameters: {
+                    // Optional: add parameters like negative_prompt, seed, sample_count
+                    // negative_prompt: "drums, electric guitar",
+                    // seed: 12345,
+                    // sample_count: 1 // Cannot be used with seed
+                },
+            };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken.token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lyria API error: ${response.status} ${response.statusText}\n${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('Lyria response:', JSON.stringify(result, null, 2));
+
+            // Extract audio content from the response
+            if (!result.predictions || result.predictions.length === 0) {
+                throw new Error("No predictions in response");
+            }
+
+            const prediction = result.predictions[0];
+            // Lyria API returns audio content in bytesBase64Encoded field (standard),
+            // but some versions may use audioContent field (fallback)
+            const audioContent = prediction.bytesBase64Encoded || prediction.audioContent;
+            
+            if (!audioContent) {
+                console.warn('Lyria response prediction:', JSON.stringify(prediction, null, 2));
+                throw new Error("No audio content found in prediction");
+            }
+
+            // Save the audio file
+            const buffer = Buffer.from(audioContent, "base64");
+            const fileName = `music.wav`; // Lyria typically outputs WAV format
             const outputPath = path.join(generatedDir, fileName);
 
             fs.writeFileSync(outputPath, buffer);
+            console.log(`Music saved to ${outputPath}`);
             return outputPath.replace(path.join(process.cwd(), "public"), "");
         } catch (error) {
             console.error('Error generating music with Lyria:', error);
+            throw error;
         }
     }
 }
