@@ -16,12 +16,53 @@ type DreamWithRelations = Dream & {
 export default function DashboardDreamsPage() {
   const router = useRouter();
   const [dreams, setDreams] = useState<DreamWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/dreams")
-      .then((response) => response.json())
-      .then((data) => setDreams(data || []))
-      .catch(() => setDreams([]));
+    console.log("[DashboardDreams] Starting fetch...");
+    setLoading(true);
+    setError(null);
+    
+    fetch("/api/dreams", {
+      credentials: "include",
+    })
+      .then(async (response) => {
+        console.log("[DashboardDreams] Response status:", response.status);
+        const data = await response.json();
+        console.log("[DashboardDreams] Response data:", data);
+        
+        if (!response.ok) {
+          console.error("Failed to fetch dreams:", response.status, response.statusText, data);
+          setError(data?.error || `Failed to fetch dreams: ${response.statusText}`);
+          return [];
+        }
+        return data;
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          console.log(`[DashboardDreams] Loaded ${data.length} dreams`);
+          setDreams(data);
+        } else if (data && Array.isArray(data.dreams)) {
+          console.log(`[DashboardDreams] Loaded ${data.dreams.length} dreams`);
+          setDreams(data.dreams);
+        } else if (data?.error) {
+          console.error("[DashboardDreams] API returned error:", data.error);
+          setError(data.error);
+          setDreams([]);
+        } else {
+          console.error("[DashboardDreams] Unexpected response format:", data);
+          setError("Unexpected response format from API");
+          setDreams([]);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("[DashboardDreams] Error fetching dreams:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch dreams");
+        setDreams([]);
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -58,7 +99,27 @@ export default function DashboardDreamsPage() {
           </div>
         </header>
 
-        {dreams.length === 0 ? (
+        {loading ? (
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur">
+            <span className="text-4xl animate-pulse">🌙</span>
+            <h2 className="text-2xl font-semibold text-white/85">Loading dreams...</h2>
+            <p className="text-sm text-white/65">
+              Gathering your dream archive...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-red-500/20 bg-red-500/10 px-10 py-16 text-center backdrop-blur">
+            <span className="text-4xl">⚠️</span>
+            <h2 className="text-2xl font-semibold text-white/85">Error loading dreams</h2>
+            <p className="text-sm text-white/65">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-xs uppercase tracking-[0.3em] text-white/80 transition hover:border-white/35 hover:bg-white/15"
+            >
+              Retry
+            </button>
+          </div>
+        ) : dreams.length === 0 ? (
           <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-3xl border border-white/12 bg-white/6 px-10 py-16 text-center backdrop-blur">
             <span className="text-4xl">🌙</span>
             <h2 className="text-2xl font-semibold text-white/85">No entries yet</h2>

@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
 import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
 
 interface DreamMedia {
   id: string;
@@ -181,13 +182,77 @@ export default function DreamDetailPage() {
             transition={{ duration: 0.8 }}
             className="rounded-[32px] border border-fuchsia-500/30 bg-white/8 p-10 text-white/80 backdrop-blur"
           >
-            <h2 className="text-2xl font-semibold text-white mb-4">
+            <h2 className="mb-6 text-2xl font-semibold text-white">
               🔮 Dream Analysis
             </h2>
-            <div className="prose prose-invert prose-sm max-w-none">
-              <div className="whitespace-pre-wrap leading-relaxed text-white/75">
+            <div className="dream-analysis prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="mb-4 mt-6 text-2xl font-semibold text-white/90 first:mt-0">
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="mb-3 mt-5 text-xl font-semibold text-white/90 first:mt-0">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="mb-2 mt-4 text-lg font-semibold text-white/85 first:mt-0">
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="mb-4 leading-relaxed text-white/75 last:mb-0">
+                      {children}
+                    </p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="mb-4 ml-6 list-disc space-y-2 text-white/75 last:mb-0">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="mb-4 ml-6 list-decimal space-y-2 text-white/75 last:mb-0">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="leading-relaxed">{children}</li>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-white/90">
+                      {children}
+                    </strong>
+                  ),
+                  em: ({ children }) => (
+                    <em className="italic text-white/80">{children}</em>
+                  ),
+                  code: ({ children, className }) => {
+                    const isInline = !className;
+                    return isInline ? (
+                      <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-fuchsia-300">
+                        {children}
+                      </code>
+                    ) : (
+                      <code className="block rounded-lg bg-black/30 p-4 font-mono text-sm text-white/90">
+                        {children}
+                      </code>
+                    );
+                  },
+                  blockquote: ({ children }) => (
+                    <blockquote className="my-4 border-l-4 border-fuchsia-500/50 bg-white/5 pl-4 italic text-white/70">
+                      {children}
+                    </blockquote>
+                  ),
+                  hr: () => (
+                    <hr className="my-6 border-white/10" />
+                  ),
+                }}
+              >
                 {analysis}
-              </div>
+              </ReactMarkdown>
             </div>
           </motion.article>
         )}

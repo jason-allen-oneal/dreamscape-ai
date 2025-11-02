@@ -14,6 +14,8 @@ import {
   Prisma,
   TagType,
 } from "@prisma/client";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 type SourceType = DreamSourceType;
 
@@ -107,13 +109,25 @@ export async function POST(req: NextRequest) {
       visibility = parseVisibility(formData.get("visibility"));
       sourceType = parseSourceType(formData.get("sourceType"));
 
+      // Ensure uploads directory exists
+      const uploadsDir = join(process.cwd(), "public", "uploads");
+      await mkdir(uploadsDir, { recursive: true });
+
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           const fileName = `${Date.now()}-${value.name}`;
-          const filePath = `/public/uploads/${fileName}`;
+          const filePath = join(uploadsDir, fileName);
+          
+          // Write file to disk
+          const bytes = await value.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+          await writeFile(filePath, buffer);
+          
+          // Store URL path (relative to public folder, so /uploads/...)
+          const urlPath = `/uploads/${fileName}`;
           mediaItems.push({
             kind: mapFormFieldToMediaKind(key),
-            url: filePath,
+            url: urlPath,
             mime: value.type,
           });
         }

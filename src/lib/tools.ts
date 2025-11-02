@@ -1,4 +1,4 @@
-import { Prisma, TagType } from "@prisma/client";
+import { TagType, TagDictionary, DreamTag } from "@prisma/client";
 import prisma from "./prisma";
 
 export interface CreateTagArgs {
@@ -16,9 +16,9 @@ export interface DatabaseTool {
     properties: Record<string, unknown>;
     required: string[];
   };
-  function: (args: CreateTagArgs) => Promise<{
-    tagDict: Prisma.TagDictionary;
-    dreamTag: Prisma.DreamTag;
+  function: (args: unknown) => Promise<{
+    tagDict: TagDictionary;
+    dreamTag: DreamTag;
   }>;
 }
 
@@ -39,7 +39,24 @@ const dbTools: DatabaseTool[] = [
       },
       required: ["type", "value", "dreamId"],
     },
-    function: async ({ type, value, weight, dreamId }: CreateTagArgs) => {
+    function: async (args: unknown) => {
+      // Validate and type-check the arguments
+      if (
+        !args ||
+        typeof args !== "object" ||
+        !("type" in args) ||
+        !("value" in args) ||
+        !("dreamId" in args)
+      ) {
+        throw new Error("Invalid arguments for createTag");
+      }
+      
+      const { type, value, weight, dreamId } = args as CreateTagArgs;
+      
+      if (typeof type !== "string" || typeof value !== "string" || typeof dreamId !== "string") {
+        throw new Error("Invalid argument types for createTag");
+      }
+
       const tagDict = await prisma.tagDictionary.upsert({
         where: { value },
         update: {},

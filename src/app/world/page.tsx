@@ -1,185 +1,269 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Stars } from "@react-three/drei";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import DreamWorld from "@/components/world/WorldScene";
 import { SpectralBackdrop } from "@/components/layout/SpectralBackdrop";
+import SurrealLoader from "@/components/layout/SurrealLoader";
 
-interface WorldData {
-  atmosphere: string;
-  themes: string[];
-  emotionalLandscape: string;
-  visualElements: {
-    colors: string[];
-    motifs: string[];
-  };
-  entities: string[];
-  characteristics: string;
+const DEFAULT_ASSETS = {
+  background: "/generated/background.png",
+  floater1: "/generated/floating1.png",
+  floater2: "/generated/floating2.png",
+  video: "/generated/video.mp4",
+} as const;
+
+interface AssetSnapshot {
+  background?: string;
+  floating1?: string;
+  floating2?: string;
+  video?: string;
+  music?: string;
 }
 
+const normalizeMediaPath = (asset?: string | null): string => {
+  if (!asset) return "";
+
+  const sanitized = asset.replace(/\\/g, "/");
+  if (sanitized.startsWith("http://") || sanitized.startsWith("https://") || sanitized.startsWith("data:")) {
+    return sanitized;
+  }
+
+  const publicSegment = "/public/";
+  const publicIndex = sanitized.indexOf(publicSegment);
+  if (publicIndex !== -1) {
+    const relative = sanitized.slice(publicIndex + publicSegment.length);
+    return `/${relative.replace(/^\/+/, "")}`;
+  }
+
+  if (sanitized.startsWith("public/")) {
+    return `/${sanitized.slice("public/".length).replace(/^\/+/, "")}`;
+  }
+
+  return sanitized.startsWith("/") ? sanitized : `/${sanitized.replace(/^\/+/, "")}`;
+};
+
 export default function WorldPage() {
-  const [worldData, setWorldData] = useState<WorldData | null>(null);
-  const [dreamCount, setDreamCount] = useState(0);
+  const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [showInfo, setShowInfo] = useState(true);
+  const [backgroundImage, setBackgroundImage] = useState<string>("");
+  const [floater1, setFloater1] = useState<string>("");
+  const [floater2, setFloater2] = useState<string>("");
+  const [video, setVideo] = useState<string>("");
+  const [music, setMusic] = useState<string>("");
+  const [navHeight, setNavHeight] = useState(0);
 
   useEffect(() => {
-    fetch("/api/world")
-      .then((res) => res.json())
-      .then((data) => {
-        setWorldData(data.worldData);
-        setDreamCount(data.dreamCount);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch world data:", err);
-        setLoading(false);
-      });
+    let isActive = true;
+
+    const ensureAssetsAvailable = async (paths: string[]) => {
+      const candidates = paths
+        .map((assetPath) => normalizeMediaPath(assetPath))
+        .filter((resolvedPath): resolvedPath is string => Boolean(resolvedPath));
+
+      if (!candidates.length) {
+        return false;
+      }
+
+      const results = await Promise.all(
+        candidates.map(async (resolvedPath) => {
+          try {
+            const response = await fetch(resolvedPath, {
+              method: "HEAD",
+              cache: "no-store",
+            });
+            return response.ok;
+          } catch {
+            return false;
+          }
+        })
+      );
+
+      return results.length > 0 && results.every(Boolean);
+    };
+
+    const extractLegacyVideo = (snapshot?: AssetSnapshot | null): string | undefined => {
+      if (!snapshot) return undefined;
+      if (snapshot.video) return snapshot.video;
+      const legacy = (snapshot as { videos?: unknown }).videos;
+      if (Array.isArray(legacy)) {
+        return legacy.find((item): item is string => typeof item === "string" && item.length > 0);
+      }
+      return undefined;
+    };
+
+    const hydrateFromSnapshot = (fallbackDescription: string, snapshot?: AssetSnapshot | null) => {
+      const snapshotVideo = extractLegacyVideo(snapshot);
+
+      const backgroundPath = normalizeMediaPath(snapshot?.background ?? DEFAULT_ASSETS.background);
+      const floaterOnePath = normalizeMediaPath(snapshot?.floating1 ?? DEFAULT_ASSETS.floater1);
+      const floaterTwoPath = normalizeMediaPath(snapshot?.floating2 ?? DEFAULT_ASSETS.floater2);
+      const primaryVideo = normalizeMediaPath(snapshotVideo ?? DEFAULT_ASSETS.video);
+
+      const snapshotMusic = snapshot?.music ?? "";
+
+      setDescription(fallbackDescription ?? "");
+      setBackgroundImage(backgroundPath);
+      setFloater1(floaterOnePath);
+      setFloater2(floaterTwoPath);
+      setVideo(primaryVideo);
+      setMusic(normalizeMediaPath(snapshotMusic));
+    };
+
+    const fetchWorld = async () => {
+      const response = await fetch("/api/world", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`World generation failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!isActive) return;
+
+      setBackgroundImage(normalizeMediaPath(data?.images?.[0]));
+      setFloater1(normalizeMediaPath(data?.images?.[1]));
+      setFloater2(normalizeMediaPath(data?.images?.[2]));
+      const apiVideo = typeof data?.video === "string" ? data.video : undefined;
+      const legacyVideo = Array.isArray((data as { videos?: unknown })?.videos)
+        ? (data as { videos?: unknown }).videos?.find(
+            (item): item is string => typeof item === "string" && item.length > 0,
+          )
+        : undefined;
+      const resolvedVideo = apiVideo ?? legacyVideo ?? DEFAULT_ASSETS.video;
+      setVideo(normalizeMediaPath(resolvedVideo));
+      setDescription(data?.description ?? "");
+      setMusic(normalizeMediaPath(data?.music));
+    };
+
+    const prepareWorld = async () => {
+      try {
+        const statusResponse = await fetch("/api/world/status", { cache: "no-store" });
+        if (!statusResponse.ok) {
+          throw new Error(`Status request failed with status ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        if (!isActive) {
+          return;
+        }
+
+        const rawLastGenerated = statusData?.lastGenerated ?? "";
+        const assetSnapshot: AssetSnapshot | null =
+          statusData?.lastAssets && typeof statusData.lastAssets === "object"
+            ? statusData.lastAssets
+            : null;
+
+        const parsedLastGenerated = Number(rawLastGenerated);
+        const hasRecentGeneration =
+          Number.isFinite(parsedLastGenerated) &&
+          Date.now() / 1000 - parsedLastGenerated < 1800;
+
+        const snapshotVideo = extractLegacyVideo(assetSnapshot);
+
+        const assetsReady = await ensureAssetsAvailable([
+          assetSnapshot?.background ?? DEFAULT_ASSETS.background,
+          assetSnapshot?.floating1 ?? DEFAULT_ASSETS.floater1,
+          assetSnapshot?.floating2 ?? DEFAULT_ASSETS.floater2,
+          snapshotVideo ?? DEFAULT_ASSETS.video,
+        ]);
+        if (!isActive) return;
+
+        if (!hasRecentGeneration || !assetsReady) {
+          await fetchWorld();
+        } else {
+          hydrateFromSnapshot(statusData?.lastDescription ?? "", assetSnapshot);
+        }
+      } catch (error) {
+        console.error("Failed to prepare dream world:", error);
+        try {
+          await fetchWorld();
+        } catch (generationError) {
+          console.error("Failed to generate dream world assets:", generationError);
+          if (isActive) {
+            setDescription("");
+            setBackgroundImage("");
+            setFloater1("");
+            setFloater2("");
+            setVideo("");
+            setMusic("");
+          }
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    prepareWorld();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
+  useEffect(() => {
+    const navElement = document.querySelector<HTMLElement>("nav[data-site-navbar]");
+    if (!navElement) return;
+
+    const updateNavMetrics = () => {
+      const { height } = navElement.getBoundingClientRect();
+      setNavHeight((prev) => (Math.abs(prev - height) < 0.5 ? prev : height));
+    };
+
+    updateNavMetrics();
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateNavMetrics())
+        : null;
+
+    resizeObserver?.observe(navElement);
+    window.addEventListener("resize", updateNavMetrics);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", updateNavMetrics);
+    };
+  }, []);
+
+  useEffect(() => {
+    const { style: bodyStyle } = document.body;
+    const { style: rootStyle } = document.documentElement;
+    const previousBodyOverflow = bodyStyle.overflowY;
+    const previousRootOverflow = rootStyle.overflowY;
+
+    bodyStyle.overflowY = "hidden";
+    rootStyle.overflowY = "hidden";
+
+    return () => {
+      bodyStyle.overflowY = previousBodyOverflow;
+      rootStyle.overflowY = previousRootOverflow;
+    };
+  }, []);
+
+  const viewportHeight = navHeight ? `calc(100dvh - ${navHeight}px)` : "100dvh";
+
   return (
-    <main className="relative h-screen w-screen overflow-x-hidden text-white">
+    <main className="relative w-full overflow-hidden text-white" style={{ height: viewportHeight }}>
       <SpectralBackdrop className="opacity-40" />
+      {loading && (
+        <SurrealLoader />
+      )}
 
-      <div className="absolute inset-0 z-10">
-        <Canvas camera={{ position: [0, 5, 15], fov: 60 }}>
-          <color attach="background" args={["#030314"]} />
-          <Suspense fallback={null}>
-            <Stars
-              radius={100}
-              depth={50}
-              count={5000}
-              factor={4}
-              saturation={0}
-              fade
-              speed={1}
-            />
-            <DreamWorld />
-            <ambientLight intensity={0.35} />
-            <pointLight position={[10, 12, 10]} intensity={0.9} color="#a855f7" />
-            <pointLight position={[-10, -6, -12]} intensity={0.5} color="#06b6d4" />
-          </Suspense>
-          <OrbitControls enableZoom enablePan minDistance={5} maxDistance={50} />
-        </Canvas>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, x: -80 }}
-        animate={{ opacity: showInfo ? 1 : 0.25, x: 0 }}
-        transition={{ duration: 0.8 }}
-        className="absolute left-6 top-6 max-w-md rounded-2xl border border-white/12 bg-black/40 px-6 py-6 backdrop-blur"
-        onMouseEnter={() => setShowInfo(true)}
-        onMouseLeave={() => setShowInfo(true)}
-      >
-        <h1 className="mb-4 text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-sky-200 via-fuchsia-200 to-violet-200">
-          🌌 Collective Dreamscape
-        </h1>
-        {loading ? (
-          <p className="text-sm text-white/60">Scrying the dream currents...</p>
-        ) : worldData ? (
-          <div className="space-y-4 text-sm text-white/75">
-            <section>
-              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
-                Atmosphere
-              </h2>
-              <p className="text-xs leading-relaxed text-white/70">
-                {worldData.atmosphere}
-              </p>
-            </section>
-
-            <section>
-              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
-                Dominant Themes
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {worldData.themes.map((theme, index) => (
-                  <span
-                    key={`${theme}-${index}`}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.35em] text-white/65"
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
-                Emotional Landscape
-              </h2>
-              <p className="text-xs leading-relaxed text-white/70">
-                {worldData.emotionalLandscape}
-              </p>
-            </section>
-
-            <section className="space-y-1 text-xs text-white/70">
-              <h2 className="text-xs uppercase tracking-[0.35em] text-white/45">
-                Visual Elements
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {worldData.visualElements.colors.map((color, index) => (
-                  <span key={`color-${index}`} className="text-white/60">
-                    {color}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {worldData.visualElements.motifs.map((motif, index) => (
-                  <span key={`motif-${index}`} className="text-white/60">
-                    {motif}
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
-                Characteristics
-              </h2>
-              <p className="text-xs leading-relaxed text-white/70">
-                {worldData.characteristics}
-              </p>
-            </section>
-
-            {worldData.entities.length > 0 && (
-              <section>
-                <h2 className="mb-1 text-xs uppercase tracking-[0.35em] text-white/45">
-                  Entities
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {worldData.entities.map((entity, index) => (
-                    <span
-                      key={`entity-${index}`}
-                      className="rounded-full border border-white/15 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.35em] text-white/60"
-                    >
-                      {entity}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <div className="pt-4 text-xs uppercase tracking-[0.3em] text-white/50">
-              {dreamCount} dreams compose this realm
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-white/60">
-            Share your visions to awaken this collective landscape.
-          </p>
-        )}
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 60 }}
-        animate={{ opacity: 0.7, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.8 }}
-        className="absolute bottom-6 right-6 rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.35em] text-white/55 backdrop-blur"
-      >
-        Drag to orbit • Scroll to descend
-      </motion.div>
+      {!loading && (
+        <motion.div
+          className="h-full w-full"
+          style={{ height: "100%" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+        >
+          <DreamWorld description={description} background={backgroundImage} images={[floater1, floater2]} video={video} music={music} />
+        </motion.div>
+      )}
     </main>
   );
 }

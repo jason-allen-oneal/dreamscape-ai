@@ -83,7 +83,7 @@ export default function DreamCard({ dream }: DreamCardProps) {
 
         {motifCount > 0 && (
           <div className="relative z-10 mb-5 flex flex-wrap gap-2">
-            {dream.tags.slice(0, 4).map((tag) => (
+            {dream.tags && dream.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag.id}
                 className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white/70 backdrop-blur"

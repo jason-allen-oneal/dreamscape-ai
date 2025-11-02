@@ -3,12 +3,19 @@ import "./globals.css";
 import { ReactNode } from "react";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/nav/Navbar";
+import { Spline_Sans_Mono } from "next/font/google";
+
+const splineSansMono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  variable: "--font-spline-mono",
+  display: "swap",
+});
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <Providers>
-        <body className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#060312] via-[#0a0621] to-[#0d0838] text-gray-100 selection:bg-fuchsia-600/30 selection:text-fuchsia-100">
+        <body className={`${splineSansMono.variable} relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#060312] via-[#0a0621] to-[#0d0838] text-gray-100 selection:bg-fuchsia-600/30 selection:text-fuchsia-100`}>
           {/* ✨ Animated atmospheric layers */}
           <div className="absolute inset-0 -z-20">
             {/* Nebular gradients */}

@@ -16,6 +16,12 @@ generator client {
 // ─── CORE MODELS ────────────────────────────────────────────────────────────────
 //
 
+model Config {
+  key   String @id @db.VarChar(100)
+  value String @db.Text
+}
+
+
 model User {
   id            String   @id @default(cuid())
   username      String   @unique

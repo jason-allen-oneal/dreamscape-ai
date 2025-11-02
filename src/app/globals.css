@@ -1,60 +1,114 @@
 @import "tailwindcss";
 
+/* ---------- theme base ---------- */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ---------- simple float/pulse helpers ---------- */
 @keyframes float {
+  0% { transform: translateY(0) translateX(0); opacity: .4; }
+  50% { transform: translateY(-60px) translateX(30px); opacity: .9; }
+  100% { transform: translateY(0) translateX(0); opacity: .4; }
+}
+.animate-float { animation: float 14s ease-in-out infinite; }
+@keyframes pulse-slower { 0%,100%{opacity:.25;transform:scale(1)} 50%{opacity:.45;transform:scale(1.1)} }
+.animate-pulse-slower { animation: pulse-slower 16s ease-in-out infinite; }
+@keyframes pulse-slowest { 0%,100%{opacity:.2;transform:scale(1)} 50%{opacity:.4;transform:scale(1.05)} }
+.animate-pulse-slowest { animation: pulse-slowest 22s ease-in-out infinite; }
+
+/* ---------- reflection (unchanged) ---------- */
+.title-reflection {
+  position: relative; display: inline-block; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; overflow: hidden;
+  background: linear-gradient(90deg,#7dd3fc,#a78bfa,#f472b6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.title-reflection::after {
+  content: attr(data-text); position: absolute; left: 0; top: 100%; width: 100%;
+  transform: scaleY(-1);
+  background: linear-gradient(90deg,#7dd3fc,#a78bfa,#f472b6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  opacity: .25; filter: blur(1px); transform-origin: top;
+  animation: reflection-wave 4s ease-in-out infinite;
+}
+@keyframes reflection-wave { 0%,100%{opacity:.25;transform:scaleY(-1) translateY(0)} 50%{opacity:.5;transform:scaleY(-1) translateY(4px)} }
+
+/* ---------- floater motion system ---------- */
+@keyframes pan-drift {
+  0% { transform: translate(0,0); }
+  50% { transform: translate(var(--pan-x,0px), var(--pan-y,0px)); }
+  100% { transform: translate(0,0); }
+}
+@keyframes float-wander {
   0% {
-    transform: translateY(0px) translateX(0px);
-    opacity: 0.4;
+    transform: perspective(900px) translate3d(0,0,0)
+      rotateZ(calc(var(--roll-amp, 8) * -1deg))
+      scale(var(--base-scale,1));
   }
   50% {
-    transform: translateY(-60px) translateX(30px);
-    opacity: 0.9;
+    transform: perspective(900px)
+      translate3d(calc(var(--float-x,0px)*.6), calc(var(--float-y,0px)*-.4), 0)
+      rotateZ(0deg)
+      scale(calc(var(--base-scale,1) + var(--zoom-amp,.12)*.6));
   }
   100% {
-    transform: translateY(0px) translateX(0px);
-    opacity: 0.4;
+    transform: perspective(900px)
+      translate3d(var(--float-x,0px), var(--float-y,0px), 0)
+      rotateZ(var(--roll-amp,8deg))
+      scale(var(--base-scale,1));
   }
 }
-.animate-float {
-  animation: float 14s ease-in-out infinite;
+@keyframes tilt-zoom-jitter {
+  0%   { transform: rotateX(calc(var(--tilt-x,6)*-1deg)) rotateY(calc(var(--tilt-y,6)*-1deg)) translate3d(0,0,0) scale(1); }
+  25%  { transform: rotateX(calc(var(--tilt-x,6)*.5deg))  rotateY(calc(var(--tilt-y,6)*-.4deg)) translate3d(calc(var(--jitter-amp,5px)*.25), calc(var(--jitter-amp,5px)*-.2), 0)  scale(calc(1 + var(--zoom-amp,.12)*.5)); }
+  50%  { transform: rotateX(0deg) rotateY(0deg) translate3d(calc(var(--jitter-amp,5px)*-.15), calc(var(--jitter-amp,5px)*.2), 0) scale(calc(1 + var(--zoom-amp,.12))); }
+  75%  { transform: rotateX(calc(var(--tilt-x,6)*.4deg))  rotateY(calc(var(--tilt-y,6)*.5deg))  translate3d(calc(var(--jitter-amp,5px)*.2),  calc(var(--jitter-amp,5px)*.15), 0) scale(calc(1 + var(--zoom-amp,.12)*.6)); }
+  100% { transform: rotateX(calc(var(--tilt-x,6)*-1deg)) rotateY(calc(var(--tilt-y,6)*1deg))  translate3d(0,0,0) scale(1); }
+}
+.anim-pan   { animation: pan-drift var(--pan-duration,36s) ease-in-out var(--pan-delay,0s) infinite alternate; will-change: transform; }
+.anim-float { animation: float-wander var(--float-duration,18s) ease-in-out var(--float-delay,0s) infinite alternate; will-change: transform; }
+.anim-tilt  { animation: tilt-zoom-jitter var(--tz-duration,9s) ease-in-out var(--tz-delay,0s) infinite; transform-style: preserve-3d; will-change: transform,filter,opacity; }
+.grainy-edge { filter: url(#edge-grain); }
+
+/* ---------- “Chromatica” description (tilted words) ---------- */
+.desc-tilt-root { display: flex; flex-direction: column; gap: .35rem; font-family: var(--font-spline-mono, "TSTAR Mono Round W00 Regular"), sans-serif; }
+.desc-tilt-line { display: flex; flex-wrap: wrap; gap: .35rem .5rem; line-height: 1.6; }
+.desc-word {
+  display: inline-block; padding: .15rem .25rem; transform-origin: center;
+  /* text style */
+  background: linear-gradient(90deg, rgba(255,255,255,.98), rgba(255,255,255,.75));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 .5px 0 rgba(255,255,255,.35), 0 6px 18px rgba(255,190,255,.12);
+  filter: drop-shadow(0 2px 10px rgba(255,255,255,.08));
+  /* IMPORTANT: tilt via CSS variable so JS animation doesn't stomp it */
+  --tilt: 0deg;
 }
 
-@keyframes pulse-slower {
-  0%, 100% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(1.1); }
-}
-.animate-pulse-slower {
-  animation: pulse-slower 16s ease-in-out infinite;
-}
+/* set the tilt via variables, not transform, to avoid Framer overriding */
+.tilt-l  { --tilt: -2deg; }
+.tilt-r  { --tilt:  2deg; }
+.tilt-l2x{ --tilt: -5deg; }
+.tilt-r2x{ --tilt:  5deg; }
 
-@keyframes pulse-slowest {
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.05); }
-}
-.animate-pulse-slowest {
-  animation: pulse-slowest 22s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  .anim-pan, .anim-float, .anim-tilt { animation: none !important; }
 }

@@ -6,12 +6,18 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <nav className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 backdrop-blur-2xl border-b border-white/10 bg-black/20">
+    <nav data-site-navbar="" className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 backdrop-blur-2xl border-b border-white/10 bg-black/20">
       <Link
         href="/"
         className="text-lg font-semibold uppercase tracking-[0.45em] text-white/70 transition hover:text-white"
       >
-        Dreamscape AI
+        <h1
+  className="title-reflection text-3xl sm:text-4xl font-extrabold tracking-wide select-none"
+  data-text="Dreamscape AI"
+>
+  Dreamscape AI
+</h1>
+
       </Link>
       <div className="flex gap-6 text-xs uppercase tracking-[0.35em] text-white/50">
         <Link href="/dreams" className="transition hover:text-white/80">

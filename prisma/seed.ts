@@ -1,9 +1,26 @@
-import { PrismaClient, TagType } from "@prisma/client";
-const prisma = new PrismaClient();
-
+import { PrismaClient, TagType, EmotionType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+const prisma = new PrismaClient();
+
 async function main() {
+  // currentTime minus 10 minutes
+  const currentTime = Math.floor(Date.now() / 1000);
+  const timeOffset = currentTime - 1800;
+
+  await prisma.config.upsert({
+    where: { key: "lastGenerated" },
+    update: { value: timeOffset.toString() },
+    create: { key: "lastGenerated", value: timeOffset.toString() },
+  });
+
+  await prisma.config.upsert({
+    where: { key: "lastDescription" },
+    update: { value: "" },
+    create: { key: "lastDescription", value: "" },
+  });
+
+  // Create or reuse test user
   const user = await prisma.user.upsert({
     where: { username: "Jason" },
     update: {},
@@ -13,68 +30,106 @@ async function main() {
       consentWorld: true,
     },
   });
-  console.log(`✅ Test user created: ${user.username}`);
 
-  // TagDictionary seed set
+  console.log(`✅ User created: ${user.username}`);
+
+  // ---------- Seed TagDictionary ----------
   const tagSeeds = [
-    // Archetypes
     { type: TagType.ARCHETYPE, value: "shadow" },
     { type: TagType.ARCHETYPE, value: "anima" },
-    { type: TagType.ARCHETYPE, value: "trickster" },
-    { type: TagType.ARCHETYPE, value: "guardian" },
-    { type: TagType.ARCHETYPE, value: "labyrinth" },
-    { type: TagType.ARCHETYPE, value: "ocean" },
-    { type: TagType.ARCHETYPE, value: "forest" },
-    { type: TagType.ARCHETYPE, value: "tower" },
-    { type: TagType.ARCHETYPE, value: "threshold" },
-    { type: TagType.ARCHETYPE, value: "rebirth" },
-
-    // Actions
-    { type: TagType.ACTION, value: "falling" },
-    { type: TagType.ACTION, value: "flying" },
-    { type: TagType.ACTION, value: "running" },
-    { type: TagType.ACTION, value: "hiding" },
-    { type: TagType.ACTION, value: "chasing" },
-    { type: TagType.ACTION, value: "floating" },
-    { type: TagType.ACTION, value: "transforming" },
-    { type: TagType.ACTION, value: "speaking_with_the_dead" },
-
-    // Emotions
-    { type: TagType.EMOTION, value: "awe" },
-    { type: TagType.EMOTION, value: "dread" },
-    { type: TagType.EMOTION, value: "grief" },
-    { type: TagType.EMOTION, value: "nostalgia" },
-    { type: TagType.EMOTION, value: "joy" },
-    { type: TagType.EMOTION, value: "serenity" },
-    { type: TagType.EMOTION, value: "panic" },
-    { type: TagType.EMOTION, value: "curiosity" },
-    { type: TagType.EMOTION, value: "desire" },
-
-    // Colors
-    { type: TagType.COLOR, value: "blue-green" },
-    { type: TagType.COLOR, value: "crimson" },
-    { type: TagType.COLOR, value: "gold" },
-    { type: TagType.COLOR, value: "violet" },
-    { type: TagType.COLOR, value: "gray" },
-    { type: TagType.COLOR, value: "amber" },
-    { type: TagType.COLOR, value: "black" },
-    { type: TagType.COLOR, value: "white" },
+    { type: TagType.ARCHETYPE, value: "noble" },
+    { type: TagType.ENTITY, value: "dog" },
+    { type: TagType.ENTITY, value: "rabbits" },
+    { type: TagType.ENTITY, value: "lettuce" },
+    { type: TagType.ENTITY, value: "food" },
+    { type: TagType.ENTITY, value: "key" },
+    { type: TagType.ENTITY, value: "laurel" },
+    { type: TagType.ENTITY, value: "crest" },
+    { type: TagType.PLACE, value: "hole" },
+    { type: TagType.ACTION, value: "gave" },
+    { type: TagType.ACTION, value: "feeding" },
+    { type: TagType.ACTION, value: "mocking" },
+    { type: TagType.EMOTION, value: "love" },
+    { type: TagType.EMOTION, value: "calm" },
+    { type: TagType.EMOTION, value: "compassion" },
+    { type: TagType.EMOTION, value: "anxiety" },
   ];
 
-  await prisma.tagDictionary.createMany({
-    data: tagSeeds,
+  await prisma.tagDictionary.createMany({ data: tagSeeds, skipDuplicates: true });
+  console.log(`🌙 Seeded ${tagSeeds.length} tag dictionary entries`);
+
+  // ---------- Seed Dreams ----------
+  await prisma.dream.createMany({
+    data: [
+      {
+        id: "dream1",
+        userId: user.id,
+        sourceType: "TEXT",
+        visibility: "WORLD",
+        rawText: "there was a dog in a hole. i gave it some food.",
+        summary: "The dreamer encountered a dog in a hole and offered it food.",
+        sentiment: 0.7,
+        valence: 0.8,
+        arousal: 0.3,
+        intensity: 0.4,
+        emotion: EmotionType.LOVE,
+      },
+      {
+        id: "dream2",
+        userId: user.id,
+        sourceType: "TEXT",
+        visibility: "WORLD",
+        rawText: "there were a couple of rabbits in a hole. i gave them lettuce.",
+        summary: "The dreamer observed rabbits in a hole and offered them lettuce.",
+        sentiment: 0.7,
+        valence: 0.8,
+        arousal: 0.2,
+        intensity: 0.3,
+        emotion: EmotionType.CALM,
+      },
+      {
+        id: "dream3",
+        userId: user.id,
+        sourceType: "TEXT",
+        visibility: "WORLD",
+        rawText:
+          "i had a dream in which i was a noble. my crest was a key surrounded by laurel. the crest was everywhere i looked, laughing, mocking.",
+        summary:
+          "The dreamer perceived themselves as a noble whose personal crest, a key surrounded by laurel, appeared ubiquitously and mockingly.",
+        sentiment: -0.6,
+        valence: 0.2,
+        arousal: 0.6,
+        intensity: 0.6,
+        emotion: EmotionType.ANXIETY,
+      },
+    ],
     skipDuplicates: true,
   });
 
-  console.log(`🌙 Seeded ${tagSeeds.length} tag dictionary entries`);
+  console.log("💭 Seeded dreams for Jason");
+
+  // ---------- Seed Media ----------
+  await prisma.media.createMany({
+    data: [
+      {
+        id: "media1",
+        dreamId: "dream3",
+        kind: "IMAGE",
+        url: "/uploads/1761959692521-veyrian_prime.png",
+        mime: "image/png",
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log("🖼️ Seeded dream media");
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .catch((e) => {
     console.error(e);
-    await prisma.$disconnect();
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });
