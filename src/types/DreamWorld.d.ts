@@ -1,4 +1,17 @@
-type Dream = {
+interface DreamTag {
+  tagDictionary?: {
+    value: string;
+  };
+  value?: string;
+}
+
+interface MediaItem {
+  kind: string;
+  url: string;
+  mime: string;
+}
+
+type DreamWithMediaAndTags = {
     id: string;
     userId: string;
     createdAt: string;
@@ -13,8 +26,8 @@ type Dream = {
     intensity: float;
     emotion: string;
     safetyFlag: boolean;
-    mediaItems: Array<{ kind: string; url: string; mime: string }>;
-    tags: Array<{ tagDictionary?: { value: string }; value?: string }>;
+    mediaItems: Array<MediaItem>;
+    tags: Array<DreamTag>;
 }
 
 type DreamMediaOverlay = {
@@ -31,5 +44,21 @@ type DreamMediaOverlay = {
       y: number;
     };
     filter: string;
-  }
+}
   
+interface WorldAssetSnapshot {
+    background?: string;
+    floating1?: string;
+    floating2?: string;
+    video?: string;
+    music?: string;
+}
+
+interface StableAIPayload {
+    model: string;
+    prompt: string;
+    output_format: string;
+    image?: string;
+    strength?: number;
+    mode?: string;
+}

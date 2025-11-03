@@ -21,17 +21,15 @@ export async function GET() {
     });
     */
 
-    const dreams = test.dreams;
-    console.log("dreams", JSON.stringify(dreams));
+    const dreams: DreamWithMediaAndTags[] = test.dreams;
 
     const data = await generateWorld(dreams);
-
     console.log("data", data);
 
     return NextResponse.json({
       description: data.description,
       images: data.images,
-      video: data.video ?? null,
+      video: data.video,
       music: data.music,
     });
   } catch (err: unknown) {
