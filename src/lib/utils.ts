@@ -6,6 +6,15 @@ import Agent from "@/lib/gemini";
 import { getGeneratedDir, listGeneratedAssets, findGeneratedAsset, normalizePublicPath } from "@/lib/client";
 import { Content } from "@google/genai";
 
+export function parseGeminiJSON(raw: string) {
+    // Remove code fences
+    const cleaned = raw
+        .replace(/```json/, "")
+        .replace(/```/g, "")
+        .trim();
+    return JSON.parse(cleaned);
+}
+
 export async function updateConfig(key: string, value: string) {
     await prisma.config.upsert({
         where: { key },

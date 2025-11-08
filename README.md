@@ -2,7 +2,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Environment Setup
 
-This project uses **free Google Gemini APIs** to keep costs minimal. 
+This project supports **two AI providers** with flexible configuration:
+- **Google Gemini** (default) - Free tier available
+- **OpenAI** (optional) - Pay-as-you-go pricing
 
 ### Required Environment Variables
 
@@ -11,22 +13,49 @@ This project uses **free Google Gemini APIs** to keep costs minimal.
    cp .env.example .env.local
    ```
 
-2. Get a **free** Gemini API key from [Google AI Studio](https://ai.google.dev/)
-
-3. Update `.env.local` with your API key:
-   ```
+2. **Option A: Using Google Gemini (Free)**
+   
+   Get a **free** Gemini API key from [Google AI Studio](https://ai.google.dev/)
+   
+   Update `.env.local`:
+   ```env
+   AI_PROVIDER=gemini
    GEMINI_API_KEY=your_api_key_here
+   GEN_MODEL=gemini-1.5-flash
    ```
+
+3. **Option B: Using OpenAI (Paid)**
+   
+   Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+   
+   Update `.env.local`:
+   ```env
+   AI_PROVIDER=openai
+   OPENAI_API_KEY=your_openai_api_key_here
+   OPENAI_MODEL=gpt-4o-mini
+   ```
+
+### AI Provider Comparison
+
+#### Google Gemini (Default)
+- ✅ **Text generation (Gemini 1.5 Flash)**: FREE with generous limits
+  - 15 requests per minute
+  - 1 million tokens per minute
+  - 1,500 requests per day
+- ❌ Video generation (Veo) - Disabled (expensive)
+- ❌ Image generation (Imagen) - Disabled (expensive)
+- ❌ Music generation (Lyria) - Disabled (expensive)
+
+#### OpenAI (Optional)
+- ✅ **Text generation (GPT-4o-mini)**: Pay-as-you-go (~$0.15/1M input tokens)
+- ✅ **Image generation (DALL-E 3)**: Optional ($0.04-$0.08 per image)
+- ❌ Video generation - Not supported
+- ❌ Music generation - Not supported
 
 ### Cost-Saving Measures
 
-To keep costs at zero, expensive media generation features have been disabled:
-- ❌ Video generation (Veo) - Very expensive
-- ❌ Image generation (Imagen) - Expensive
-- ❌ Music generation (Lyria) - Expensive
-- ✅ Text generation (Gemini 1.5 Flash) - **FREE** with generous limits
-
-The application will still generate dream descriptions and analysis using the free Gemini API.
+To keep costs minimal, expensive media generation features are disabled by default.
+The application focuses on text-based dream analysis and descriptions, which work excellently with both providers.
 
 ## Getting Started
 
