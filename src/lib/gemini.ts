@@ -1,9 +1,29 @@
-import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type, Tool, Content } from "@google/genai";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { getGeneratedDir } from "./client";
 
-class Agent {
+export function parseGeminiJSON(raw: string) {
+    // Remove code fences
+    const cleaned = raw
+        .replace(/```json/, "")
+        .replace(/```/g, "")
+        .trim();
+    return JSON.parse(cleaned);
+}
+
+interface AgentConfig {
+    name: string;
+    instructions: string;
+    tools?: unknown[];
+}
+
+interface AgentResult {
+    finalOutput: string;
+    toolCalls?: unknown[];
+}
+
+class GeminiAgent {
     private ai: GoogleGenAI;
     constructor() {
         this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
@@ -177,4 +197,60 @@ class Agent {
     }
 }
 
-export default new Agent();
+// Export named Agent class that can be instantiated with config
+export class Agent {
+    private config: AgentConfig;
+    private ai: GoogleGenAI;
+
+    constructor(config: AgentConfig) {
+        this.config = config;
+        this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    }
+
+    async execute(userMessage: string): Promise<AgentResult> {
+        const tools: Tool[] = [];
+        
+        // Convert database tools to Gemini format if provided
+        if (this.config.tools && Array.isArray(this.config.tools)) {
+            for (const tool of this.config.tools) {
+                if (typeof tool === 'object' && tool !== null && 'name' in tool && 'description' in tool && 'parameters' in tool) {
+                    tools.push({
+                        functionDeclarations: [{
+                            name: tool.name as string,
+                            description: tool.description as string,
+                            parameters: tool.parameters as Record<string, unknown>,
+                        }]
+                    });
+                }
+            }
+        }
+
+        const contents: Content[] = [
+            { role: "user", parts: [{ text: userMessage }] }
+        ];
+
+        const result = await this.ai.models.generateContent({
+            model: process.env.GEN_MODEL || "gemini-1.5-flash",
+            contents,
+            config: {
+                systemInstruction: [this.config.instructions],
+                tools: tools.length > 0 ? tools : undefined,
+                responseMimeType: "application/json",
+            },
+        });
+
+        return {
+            finalOutput: result.text || "",
+            toolCalls: [],
+        };
+    }
+}
+
+// Export run function for executing agents
+export async function run(agent: Agent, userMessage: string): Promise<AgentResult> {
+    return await agent.execute(userMessage);
+}
+
+// Export default singleton instance for backward compatibility
+const defaultAgent = new GeminiAgent();
+export default defaultAgent;
